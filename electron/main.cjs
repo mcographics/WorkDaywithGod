@@ -228,6 +228,7 @@ function registerIpc() {
     notificationSupported: Notification.isSupported(),
     userDataPath: app.getPath("userData"),
   }));
+  ipcMain.handle("support:email", () => shell.openExternal("mailto:kenneth.salmon87@outlook.com?subject=Work%20Day%20with%20God%20Support"));
   ipcMain.on("window:minimize", () => mainWindow?.minimize());
   ipcMain.on("window:close", () => mainWindow?.close());
   ipcMain.on("window:set-mode", (_event, mode) => {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight,
-  Clock3, Heart, History, Minus, Pause, Play, RotateCcw, Settings, SlidersHorizontal, X,
+  Clock3, Heart, History, Info, Mail, Minus, Pause, Play, RotateCcw, Settings, SlidersHorizontal, UserRound, X,
 } from "lucide-react";
 import { calculateStreak, dateId, devotionalForDate, isoDate, loadCatalogue } from "./catalogue";
 import { getChapter, translations } from "./scripture";
@@ -31,6 +31,7 @@ const desktop = window.desktop || {
   exportData: async () => ({ canceled: true }), importData: async () => ({ canceled: true }),
   resetHistory: async () => browserState, resetFavourites: async () => browserState, resetAll: async () => browserState,
   getAppInfo: async () => ({ version: "1.0.0", notificationSupported: false }),
+  openSupportEmail: async () => { window.location.href = "mailto:kenneth.salmon87@outlook.com?subject=Work%20Day%20with%20God%20Support"; },
   onNavigate: () => () => {}, onOpenDate: () => () => {}, onStateChanged: () => () => {},
 };
 
@@ -311,7 +312,17 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
         <div className="action-row"><button title="Open the Windows folder containing this app’s local settings and reading data" onClick={() => run(() => desktop.openDataFolder(), "Local data folder opened.")}>Open data folder</button><button title="Save settings, favourites, and reading history to a portable JSON backup" onClick={() => run(() => desktop.exportData(), "Backup exported.")}>Export backup</button><button title="Restore settings and reading data from a previously exported JSON backup" onClick={() => run(() => desktop.importData(), "Backup imported.")}>Import backup</button></div>
         <div className="action-row danger"><button title="Restore every setting to default and erase all local reading history and favourites" onClick={() => window.confirm("Reset all Work Day with God settings and history?") && run(async () => ({ state: await desktop.resetAll() }), "Application reset.")}>Reset entire application</button></div>
       </div>
-      <div className="settings-group"><h2>About</h2><div className="about-row"><span>Work Day with God {appInfo?.version}</span><span>Notifications: {appInfo?.notificationSupported ? "supported" : "unavailable"}</span></div></div>
+      <div className="settings-group"><h2>About</h2>
+        <div className="about-settings">
+          <div className="about-settings-intro"><BookOpen size={25} /><div><h3>Work Day with God</h3><strong>Work. Faith. Purpose.</strong><p>Work Day with God is a completely free Christian devotional app for Windows, created to bring Scripture, reflection, prayer, and peaceful encouragement into your daily work routine. It works offline, requires no account or subscription, and stores your settings and reading activity locally on your computer.</p></div></div>
+          <div className="about-settings-details">
+            <div><UserRound size={18} /><span><small>Author / Developer</small><strong>Kenneth Salmon</strong><em>Creator and developer of Work Day with God.</em></span></div>
+            <div><Mail size={18} /><span><small>Support email</small><button title="Write an email to Work Day with God support" onClick={() => desktop.openSupportEmail()}>kenneth.salmon87@outlook.com</button><em>For support, feedback, or bug reports.</em></span></div>
+            <div><Info size={18} /><span><small>Application version</small><strong>{appInfo?.version ? `Version ${appInfo.version}` : "Work Day with God"}</strong><em>Notifications: {appInfo?.notificationSupported ? "supported" : "unavailable"}</em></span></div>
+          </div>
+          <p className="about-settings-footer">Daily devotional content © Work Day with God. Scripture quotations remain subject to their respective translation terms.</p>
+        </div>
+      </div>
       {message && <div className="settings-message" role="status">{message}</div>}
     </div>
   </section>;
