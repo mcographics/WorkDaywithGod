@@ -4,6 +4,10 @@
 
 Work Day with God is a peaceful Windows desktop companion created to help Christians pause, read Scripture, reflect, and pray throughout the working day.
 
+<p align="center">
+  <img src="Adverts/ijTay.jpg" alt="Work Day with God daily Scripture card" width="900">
+</p>
+
 Each calendar day presents a Bible verse, an original devotional reflection, a practical question, a short prayer, and a scenic background. Gentle reminders can be scheduled around your day, while the app remains quietly available from the Windows system tray.
 
 There are no subscriptions, advertisements, accounts, or paid features. The app is completely free to download and use.
@@ -26,6 +30,20 @@ There are no subscriptions, advertisements, accounts, or paid features. The app 
 - System-tray operation with **Open**, **Settings**, and **Quit**
 - Automatic daily rollover at midnight
 - Complete offline operation after installation
+
+## A look inside
+
+### Read and reflect
+
+![Work Day with God expanded devotional reader](Adverts/7fbJC.jpg)
+
+### Remember your journey
+
+![Work Day with God calendar and reading history](Adverts/DnmHh.jpg)
+
+### Make it yours
+
+![Work Day with God reminder and startup settings](Adverts/UV6ZZ.jpg)
 
 ## Designed for a quieter workday
 
