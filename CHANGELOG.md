@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-31
+
 ### Added
 
 - A live centre-header display showing the user’s local time and date alongside Jerusalem time and the Hebrew calendar date.
@@ -86,5 +88,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.0.0

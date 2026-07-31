@@ -21,8 +21,10 @@ function sourceIconPath() {
   return path.join(__dirname, "..", "icon.png");
 }
 
-function windowsIconPath() {
-  return path.join(__dirname, "..", "build", "icon.ico");
+function applicationIcon() {
+  const icon = nativeImage.createFromPath(sourceIconPath());
+  if (icon.isEmpty()) throw new Error(`Application icon could not be loaded from ${sourceIconPath()}`);
+  return icon;
 }
 
 function todayId(date = new Date()) {
@@ -42,6 +44,7 @@ function placeBottomRight(window, size) {
 
 function showWindow(view = "today") {
   if (!mainWindow) return;
+  mainWindow.setIcon(applicationIcon());
   if (view === "settings") mainWindow.webContents.send("app:navigate", "settings");
   else mainWindow.webContents.send("app:navigate", "today");
   if (mainWindow.isMinimized()) mainWindow.restore();
@@ -58,7 +61,7 @@ function createWindow() {
     show: false,
     backgroundColor: "#00000000",
     title: "Work Day with God",
-    icon: windowsIconPath(),
+    icon: applicationIcon(),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -66,6 +69,7 @@ function createWindow() {
       sandbox: true,
     },
   });
+  mainWindow.setIcon(applicationIcon());
 
   placeBottomRight(mainWindow, compactSize);
   const devUrl = process.env.VITE_DEV_SERVER_URL || "http://127.0.0.1:5173";
@@ -94,7 +98,7 @@ function createWindow() {
 }
 
 function trayImage() {
-  return nativeImage.createFromPath(sourceIconPath()).resize({ width: 20, height: 20 });
+  return applicationIcon().resize({ width: 20, height: 20, quality: "best" });
 }
 
 function setSnooze(until) {
