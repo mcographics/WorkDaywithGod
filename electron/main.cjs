@@ -163,6 +163,13 @@ function registerIpc() {
     setSnooze(Math.max(0, Number(until) || 0));
     return scheduler.status();
   });
+  ipcMain.handle("reminders:later", (_event, until) => {
+    const remindAt = Math.max(Date.now() + 60_000, Number(until) || 0);
+    const state = store.patchState({ remindAt, snoozeUntil: remindAt });
+    rebuildTray();
+    mainWindow?.webContents.send("app:state-changed", state);
+    return { ...state, scheduler: scheduler.status() };
+  });
   ipcMain.handle("notifications:test", () => {
     if (!Notification.isSupported()) return { supported: false };
     const settings = store.get().settings;

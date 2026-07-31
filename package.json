@@ -9,6 +9,7 @@
     "content:generate": "node scripts/generate-content.cjs",
     "branding:generate": "node scripts/generate-branding.cjs",
     "scenes:process": "node scripts/process-scenes.cjs",
+    "scenes:download-free": "node scripts/download-free-scenes.cjs",
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
     "build": "vite build",
     "preview": "vite preview",

@@ -71,6 +71,7 @@ function normalizeState(input = {}) {
     completions: input.completions && typeof input.completions === "object" ? input.completions : {},
     readingPositions: input.readingPositions && typeof input.readingPositions === "object" ? input.readingPositions : {},
     snoozeUntil: Number(input.snoozeUntil) || 0,
+    remindAt: Number(input.remindAt) || 0,
     lastNotificationKey: typeof input.lastNotificationKey === "string" ? input.lastNotificationKey : "",
     migrationComplete: Boolean(input.migrationComplete),
   };

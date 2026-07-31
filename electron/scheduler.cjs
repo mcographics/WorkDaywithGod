@@ -76,6 +76,14 @@ class ReminderScheduler {
     const settings = state.settings;
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     this.lastTickAt = now.getTime();
+
+    if (state.remindAt > 0 && state.remindAt <= now.getTime()) {
+      const wasRecentlyDue = now.getTime() - state.remindAt <= 5 * 60 * 1000;
+      this.store.patchState({ remindAt: 0, snoozeUntil: 0 });
+      if (wasRecentlyDue && settings.notificationsEnabled) this.notify(now);
+      return;
+    }
+
     if (!settings.activeDays.includes(now.getDay())) return;
     if (state.snoozeUntil > now.getTime() || inQuietHours(nowMinutes, settings.quietHours)) return;
 

@@ -25,12 +25,12 @@ for (let month = 0; month < 12; month += 1) {
 
 const positions = ["centre", "north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest"];
 const seasonalGrade = [
-  { brightness: .92, saturation: .78, hue: 210 }, { brightness: .96, saturation: .84, hue: 205 },
-  { brightness: 1.02, saturation: .94, hue: 75 }, { brightness: 1.04, saturation: 1.02, hue: 85 },
-  { brightness: 1.06, saturation: 1.08, hue: 95 }, { brightness: 1.06, saturation: 1.04, hue: 82 },
-  { brightness: 1.02, saturation: 1.03, hue: 70 }, { brightness: 1, saturation: 1.02, hue: 55 },
-  { brightness: 1.01, saturation: 1.08, hue: 42 }, { brightness: .98, saturation: 1.12, hue: 30 },
-  { brightness: .94, saturation: .9, hue: 22 }, { brightness: .9, saturation: .8, hue: 215 },
+  { brightness: 1.02, saturation: 1.08, hue: 210 }, { brightness: 1.04, saturation: 1.12, hue: 205 },
+  { brightness: 1.08, saturation: 1.18, hue: 75 }, { brightness: 1.1, saturation: 1.22, hue: 85 },
+  { brightness: 1.12, saturation: 1.25, hue: 95 }, { brightness: 1.12, saturation: 1.22, hue: 82 },
+  { brightness: 1.1, saturation: 1.2, hue: 70 }, { brightness: 1.08, saturation: 1.2, hue: 55 },
+  { brightness: 1.08, saturation: 1.24, hue: 42 }, { brightness: 1.06, saturation: 1.26, hue: 30 },
+  { brightness: 1.02, saturation: 1.14, hue: 22 }, { brightness: 1, saturation: 1.1, hue: 215 },
 ];
 
 const destination = path.join(root, "public", "scenes");

@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("desktop", Object.freeze({
   updateState: (patch) => ipcRenderer.invoke("state:update", patch),
   migrateLegacy: (legacy) => ipcRenderer.invoke("state:migrate", legacy),
   snooze: (until) => ipcRenderer.invoke("reminders:snooze", until),
+  remindLater: (until) => ipcRenderer.invoke("reminders:later", until),
   testNotification: () => ipcRenderer.invoke("notifications:test"),
   openDataFolder: () => ipcRenderer.invoke("data:open-folder"),
   exportData: () => ipcRenderer.invoke("data:export"),

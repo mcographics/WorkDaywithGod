@@ -1,6 +1,9 @@
 node_modules/
 dist/
 release/
+.scene-candidates.json
+scene-download.log
+scene-download.err.log
 
 # DATA is a local source library. Only the nine translation caches used by
 # Work Day with God belong in this repository.
