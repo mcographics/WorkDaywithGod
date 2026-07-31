@@ -6,6 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-31
+
+### Added
+
+- An expanded **About** section inside Settings describing the application and its free, offline-first purpose.
+- Author and developer attribution for Kenneth Salmon.
+- A clickable support address for `kenneth.salmon87@outlook.com` that opens the user’s default email application.
+- Application version and Windows notification-support information in Settings.
+- A public README section explaining that the official app is completely free of charge while original content and branding remain protected by copyright.
+- Promotional application artwork and transparent B-roll cutouts for public release materials.
+
+### Changed
+
+- Kept About information within the Settings page instead of adding another primary navigation tab.
+
 ## [1.1.1] - 2026-07-31
 
 ### Fixed
@@ -98,7 +113,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.0.0
