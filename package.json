@@ -1,6 +1,6 @@
 {
   "name": "work-day-with-god",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "author": "Work Day with God",
   "description": "An ambient desktop devotional companion.",
@@ -29,7 +29,7 @@
     "wait-on": "^8.0.3"
   },
   "build": {
-    "appId": "com.workdaywithgod.desktop",
+    "appId": "com.mcographics.workdaywithgod",
     "productName": "Work Day with God",
     "copyright": "Copyright © 2026 Work Day with God",
     "directories": {

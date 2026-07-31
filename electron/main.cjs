@@ -4,7 +4,7 @@ const path = require("path");
 const { AppStore } = require("./store.cjs");
 const { ReminderScheduler } = require("./scheduler.cjs");
 
-const APP_ID = "com.workdaywithgod.desktop";
+const APP_ID = "com.mcographics.workdaywithgod";
 const compactSize = { width: 440, height: 610 };
 const readerSize = { width: 1040, height: 780 };
 let mainWindow;
@@ -14,6 +14,7 @@ let scheduler;
 let isQuitting = false;
 let devotionalCatalogue = [];
 
+app.setName("Work Day with God");
 app.setAppUserModelId(APP_ID);
 if (!app.requestSingleInstanceLock()) app.quit();
 

@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-31
+
+### Fixed
+
+- Assigned the publisher-specific Windows application identity `com.mcographics.workdaywithgod`, preventing the installed application from being grouped with Electron development windows on the taskbar.
+- Set the Windows application name explicitly to **Work Day with God** so taskbar and notification identity remain consistent.
+- Made the root `icon.png` the direct runtime icon source for the Electron window, taskbar, and system tray.
+- Kept `icon.png` as the single branding source by generating the Windows executable and NSIS installer `.ico` resource from it during every release build.
+- Rebuilt the Windows installer with the corrected application identity and icon configuration.
+
 ## [1.1.0] - 2026-07-31
 
 ### Added
@@ -88,6 +98,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.0.0
