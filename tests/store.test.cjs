@@ -47,3 +47,21 @@ test("expanded settings and reading state persist", () => {
   assert.equal(state.readingPositions["2026-07-30"], 420);
   fs.rmSync(directory, { recursive: true, force: true });
 });
+
+test("invalid imported appearance, translation, booleans, and quiet hours recover safely", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "wdwg-store-"));
+  const store = new AppStore(directory);
+  const state = store.replace({ settings: {
+    theme: "injected-theme",
+    colorMode: "unknown",
+    translation: "MISSING",
+    notificationsEnabled: "yes",
+    quietHours: { enabled: "yes", start: "99:00", end: "bad" },
+  } });
+  assert.equal(state.settings.theme, "gold");
+  assert.equal(state.settings.colorMode, "system");
+  assert.equal(state.settings.translation, "KJV");
+  assert.equal(state.settings.notificationsEnabled, true);
+  assert.deepEqual(state.settings.quietHours, { enabled: true, start: "18:00", end: "08:00" });
+  fs.rmSync(directory, { recursive: true, force: true });
+});

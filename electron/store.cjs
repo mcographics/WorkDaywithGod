@@ -2,6 +2,15 @@ const fs = require("fs");
 const path = require("path");
 
 const STORE_VERSION = 1;
+const BOOLEAN_SETTINGS = [
+  "launchAtLogin", "showStartupCard", "startInTray", "notificationsEnabled", "notificationSound",
+  "imageTransition", "focusMode", "reducedMotion", "autoScrollEnabled", "hoverPausesScroll",
+  "rememberReadingPosition", "showReflectionPrompt", "showPrayer", "showAttribution",
+  "automaticDailyContent", "automaticDailyImage", "preventFutureDevotionals", "showStreak",
+];
+const THEMES = ["gold", "blue", "forest", "burgundy", "lavender", "terracotta", "sage", "rose", "teal", "charcoal"];
+const TRANSLATIONS = ["KJV", "ASV", "DBT", "DRB", "ERV", "JPS", "WBT", "YLT", "GENEVA_BIBLE1560"];
+const validClock = (value) => typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 const DEFAULT_SETTINGS = Object.freeze({
   launchAtLogin: true,
   closeToTray: true,
@@ -43,9 +52,13 @@ function clone(value) {
 
 function normalizeSettings(input = {}) {
   const next = { ...clone(DEFAULT_SETTINGS), ...input };
+  for (const key of BOOLEAN_SETTINGS) next[key] = typeof input[key] === "boolean" ? input[key] : DEFAULT_SETTINGS[key];
+  next.theme = THEMES.includes(next.theme) ? next.theme : DEFAULT_SETTINGS.theme;
+  next.colorMode = ["system", "light", "dark"].includes(next.colorMode) ? next.colorMode : DEFAULT_SETTINGS.colorMode;
+  next.translation = TRANSLATIONS.includes(next.translation) ? next.translation : DEFAULT_SETTINGS.translation;
   next.reminderMode = ["times", "interval"].includes(next.reminderMode) ? next.reminderMode : "times";
   next.reminderTimes = Array.isArray(next.reminderTimes)
-    ? [...new Set(next.reminderTimes.filter((time) => /^([01]\d|2[0-3]):[0-5]\d$/.test(time)))].sort()
+    ? [...new Set(next.reminderTimes.filter(validClock))].sort()
     : clone(DEFAULT_SETTINGS.reminderTimes);
   next.intervalMinutes = Math.min(720, Math.max(15, Number(next.intervalMinutes) || 60));
   next.activeDays = Array.isArray(next.activeDays)
@@ -55,6 +68,9 @@ function normalizeSettings(input = {}) {
     ...clone(DEFAULT_SETTINGS.quietHours),
     ...(input.quietHours || {}),
   };
+  next.quietHours.enabled = typeof input.quietHours?.enabled === "boolean" ? input.quietHours.enabled : DEFAULT_SETTINGS.quietHours.enabled;
+  next.quietHours.start = validClock(next.quietHours.start) ? next.quietHours.start : DEFAULT_SETTINGS.quietHours.start;
+  next.quietHours.end = validClock(next.quietHours.end) ? next.quietHours.end : DEFAULT_SETTINGS.quietHours.end;
   next.fontScale = Math.min(1.4, Math.max(0.8, Number(next.fontScale) || 1));
   next.scriptureFontScale = Math.min(1.4, Math.max(0.8, Number(next.scriptureFontScale) || 1));
   next.imageOverlay = Math.min(75, Math.max(10, Number(next.imageOverlay) || 38));

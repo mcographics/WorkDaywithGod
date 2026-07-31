@@ -89,6 +89,8 @@ function createWindow() {
     const current = mainWindow.webContents.getURL();
     if (url !== current) event.preventDefault();
   });
+  mainWindow.webContents.session.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
+  mainWindow.webContents.session.setPermissionCheckHandler(() => false);
 }
 
 function trayImage() {
@@ -226,8 +228,8 @@ function registerIpc() {
   ipcMain.on("window:set-mode", (_event, mode) => {
     if (!mainWindow) return;
     const size = mode === "reader" ? readerSize : compactSize;
+    mainWindow.setMinimumSize(mode === "reader" ? 800 : compactSize.width, mode === "reader" ? 640 : compactSize.height);
     mainWindow.setResizable(mode === "reader");
-    if (mode === "reader") mainWindow.setMinimumSize(800, 640);
     placeBottomRight(mainWindow, size);
   });
 }

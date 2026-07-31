@@ -4,6 +4,15 @@ release/
 .scene-candidates.json
 scene-download.log
 scene-download.err.log
+scene-library-build.log
+scene-library-build.err.log
+/scene-library/
+electronegativity-report.csv
+installer-build.log
+installer-build.err.log
+.smoke-profile/
+smoke-app.log
+smoke-app.err.log
 
 # DATA is a local source library. Only the nine translation caches used by
 # Work Day with God belong in this repository.

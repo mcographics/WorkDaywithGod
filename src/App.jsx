@@ -41,6 +41,27 @@ function WindowControls() {
   </div>;
 }
 
+function HeaderClock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const local = `${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · ${now.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}`;
+  let hebrew;
+  try {
+    const jerusalemTime = now.toLocaleTimeString([], { timeZone: "Asia/Jerusalem", hour: "numeric", minute: "2-digit" });
+    const hebrewDate = new Intl.DateTimeFormat("en-US-u-ca-hebrew", { timeZone: "Asia/Jerusalem", month: "long", day: "numeric", year: "numeric" }).format(now);
+    hebrew = `${jerusalemTime} · ${hebrewDate}`;
+  } catch {
+    hebrew = "Hebrew calendar unavailable";
+  }
+  return <div className="header-clock" aria-label={`Local time ${local}. Jerusalem Hebrew date ${hebrew}.`}>
+    <span><strong>Local</strong>{local}</span>
+    <span><strong>Jerusalem</strong>{hebrew}</span>
+  </div>;
+}
+
 function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, settings }) {
   const [reminderMessage, setReminderMessage] = useState("");
   const hour = new Date().getHours();
@@ -54,7 +75,7 @@ function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, se
   return <main className={`compact-shell accent-${settings.theme} ${settings.focusMode ? "focus-mode" : ""} ${verseLengthClass}`}>
     {!settings.focusMode && <div className={`photo-layer ${settings.imageTransition ? "" : "no-transition"}`} style={{ backgroundImage: `url("./scenes/${settings.automaticDailyImage ? devotional.image : "01-01.webp"}")` }} />}
     <div className="card-shade" style={{ "--overlay": settings.imageOverlay / 100 }} />
-    <div className="drag-bar"><div className="brand-mark"><span>WORK DAY</span><em>with God</em></div><WindowControls /></div>
+    <div className="drag-bar"><div className="brand-mark"><span>WORK DAY</span><em>with God</em></div><HeaderClock /><WindowControls /></div>
     <section className="verse-card">
       <div className="eyebrow"><span className="eyebrow-line" />{greeting}</div>
       <blockquote>“{devotional.verse}”</blockquote>
@@ -65,7 +86,7 @@ function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, se
       <div><span className="status-dot" /> {settings.showStreak && streak ? `${streak}-day reading streak` : "A quiet reminder for your day"}</div>
       <div className="footer-actions">
         <button title={favourite ? "Remove today from favourites" : "Save today to favourites"} className={favourite ? "active" : ""} onClick={onFavourite} aria-label="Favourite"><Heart size={17} fill={favourite ? "currentColor" : "none"} /></button>
-        <button title={`Remind me again in ${settings.remindLaterMinutes} minutes`} aria-label={`Remind me in ${settings.remindLaterMinutes} minutes`} onClick={scheduleReminder}><Clock3 size={17} /></button>
+        <button disabled={!settings.notificationsEnabled} title={settings.notificationsEnabled ? `Remind me again in ${settings.remindLaterMinutes} minutes` : "Enable notifications in Settings to use Remind me later"} aria-label={settings.notificationsEnabled ? `Remind me in ${settings.remindLaterMinutes} minutes` : "Remind me later unavailable because notifications are off"} onClick={scheduleReminder}><Clock3 size={17} /></button>
         <button title="Open application settings" aria-label="Settings" onClick={() => onRead("settings")}><SlidersHorizontal size={17} /></button>
       </div>
     </footer>
@@ -138,7 +159,7 @@ function ReadingView({ devotional, selectedDate, dateScope, settings, appState, 
     const nextKey = isoDate(next);
     const todayKey = isoDate();
     if (dateScope === "today") return;
-    if (dateScope === "past" && nextKey >= todayKey) return;
+    if (dateScope === "past" && nextKey > todayKey) return;
     if (dateScope === "future" && nextKey <= todayKey) return;
     onSelectDate(next);
   };
@@ -146,7 +167,7 @@ function ReadingView({ devotional, selectedDate, dateScope, settings, appState, 
   const nextKey = isoDate(new Date(new Date(`${selectedDate}T12:00:00`).setDate(new Date(`${selectedDate}T12:00:00`).getDate() + 1)));
   const todayKey = isoDate();
   const canGoPrevious = dateScope === "past" ? true : dateScope === "future" && previousKey > todayKey;
-  const canGoNext = dateScope === "future" ? true : dateScope === "past" && nextKey < todayKey;
+  const canGoNext = dateScope === "future" ? true : dateScope === "past" && nextKey <= todayKey;
 
   return <div className="reader-layout">
     <aside className="reader-aside">
@@ -184,9 +205,10 @@ function ReadingView({ devotional, selectedDate, dateScope, settings, appState, 
 function CalendarView({ catalogue, appState, mode, onSelectDate }) {
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const firstOffset = month.getDay();
-  const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-  const cells = [...Array(firstOffset).fill(null), ...Array.from({ length: days }, (_, index) => index + 1)];
-  const todayKey = isoDate();
+  const lastDayOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const cells = [...Array(firstOffset).fill(null), ...Array.from({ length: lastDayOfMonth }, (_, index) => index + 1)];
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
   const currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const isHistory = mode === "history";
   const canGoPreviousMonth = isHistory || month > currentMonth;
@@ -201,7 +223,7 @@ function CalendarView({ catalogue, appState, mode, onSelectDate }) {
         const date = new Date(month.getFullYear(), month.getMonth(), day, 12);
         const item = devotionalForDate(catalogue, date);
         const key = isoDate(date);
-        const available = isHistory ? key < todayKey : key > todayKey;
+        const available = isHistory ? date.getTime() <= today.getTime() : date.getTime() > today.getTime();
         if (!available) return <div className="unavailable-day" key={key}><span>{day}</span></div>;
         return <button title={`Open the ${date.toLocaleDateString()} devotional`} aria-label={`Open devotional for ${date.toLocaleDateString()}`} key={key} className={`${appState.completions[key] ? "completed-day" : ""}`} onClick={() => onSelectDate(date)}>
           <span>{day}</span><small>{item.theme}</small>{appState.favourites.includes(item.id) && <Heart size={12} fill="currentColor" />}{appState.completions[key] && <Check size={13} />}
@@ -269,7 +291,7 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
         {settings.quietHours.enabled && <div className="quiet-times" title="Notifications remain silent between these local times"><input aria-label="Quiet hours start time" type="time" value={settings.quietHours.start} onChange={(event) => updateQuiet({ start: event.target.value })} /><span>to</span><input aria-label="Quiet hours end time" type="time" value={settings.quietHours.end} onChange={(event) => updateQuiet({ end: event.target.value })} /></div>}
         <div className="snooze-row"><Bell size={18} /><span>{paused ? `Paused until ${new Date(appState.snoozeUntil).toLocaleString()}` : "Reminders are active"}</span>{paused ? <button title="End the current pause and resume scheduled reminders" onClick={() => onSnooze(0)}>Resume</button> : <><button title="Temporarily stop reminders for the next hour" onClick={() => onSnooze(Date.now() + 60 * 60 * 1000)}>Pause 1 hour</button><button title="Stop reminders until midnight tonight" onClick={() => { const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0,0,0,0); onSnooze(tomorrow.getTime()); }}>Until tomorrow</button></>}</div>
         <label title="Set the snooze duration used by the Verse Card clock button" className="field-label"><span><strong>“Remind me later” duration</strong><small>How long the Verse Card clock button pauses reminders.</small></span><span className="number-field"><input aria-label="Remind me later duration in minutes" type="number" min="5" max="1440" value={settings.remindLaterMinutes} onChange={(event) => onPatchSettings({ remindLaterMinutes: Number(event.target.value) })} /> minutes</span></label>
-        <div className="action-row"><button title="Display a sample Windows notification using the current notification settings" onClick={() => run(() => desktop.testNotification(), "Test notification sent.")}>Send test notification</button></div>
+        <div className="action-row"><button disabled={!settings.notificationsEnabled} title={settings.notificationsEnabled ? "Display a sample Windows notification using the current notification settings" : "Enable notifications before sending a test notification"} onClick={() => run(async () => { const result = await desktop.testNotification(); if (!result.supported) throw new Error("Windows notifications are unavailable on this system."); return result; }, "Test notification sent.")}>Send test notification</button></div>
       </div>
       <div className="settings-group"><h2>Appearance & reading</h2>
         <div className="theme-options expanded">{["gold","blue","forest","burgundy","lavender","terracotta","sage","rose","teal","charcoal"].map((theme) => <button title={`Use the ${theme} accent colour throughout the app`} key={theme} className={settings.theme === theme ? "chosen" : ""} onClick={() => onPatchSettings({ theme })}><i className={theme} />{theme}</button>)}</div>
@@ -347,22 +369,26 @@ export default function App() {
   const [mode, setMode] = useState("card");
   const [readerView, setReaderView] = useState("today");
   const [selectedDate, setSelectedDate] = useState(() => isoDate());
+  const [startupError, setStartupError] = useState("");
   const selectedCalendarDate = useMemo(() => new Date(`${selectedDate}T12:00:00`), [selectedDate]);
   const devotional = catalogue.length ? devotionalForDate(catalogue, selectedCalendarDate) : null;
 
   useEffect(() => {
+    let active = true;
     Promise.all([loadCatalogue(), desktop.getState()]).then(async ([items, state]) => {
       setCatalogue(items);
       if (!state.migrationComplete) {
+        let legacyFavourites = [];
+        try { legacyFavourites = JSON.parse(localStorage.getItem("wdwg-favourites") || "[]"); } catch {}
         state = await desktop.migrateLegacy({
           theme: localStorage.getItem("wdwg-theme"),
           fontScale: Number(localStorage.getItem("wdwg-font-scale")) || undefined,
           translation: localStorage.getItem("wdwg-translation"),
-          favourites: JSON.parse(localStorage.getItem("wdwg-favourites") || "[]"),
+          favourites: legacyFavourites,
         });
       }
-      setAppState(state);
-    });
+      if (active) setAppState(state);
+    }).catch((error) => active && setStartupError(error.message || "The application could not be opened."));
     const removeNavigate = desktop.onNavigate((view) => {
       setReaderView(view === "settings" ? "settings" : "today");
       if (view !== "settings") setSelectedDate(isoDate());
@@ -373,12 +399,17 @@ export default function App() {
       setSelectedDate(`${year}-${id}`); setReaderView("today"); setMode("reader"); desktop.setMode("reader");
     });
     const removeState = desktop.onStateChanged(setAppState);
+    return () => { active = false; removeNavigate(); removeDate(); removeState(); };
+  }, []);
+
+  useEffect(() => {
     const rollover = setInterval(() => {
       if (mode === "card" && (appState?.settings.automaticDailyContent ?? true)) setSelectedDate(isoDate());
     }, 60_000);
-    return () => { removeNavigate(); removeDate(); removeState(); clearInterval(rollover); };
+    return () => clearInterval(rollover);
   }, [mode, appState?.settings.automaticDailyContent]);
 
+  if (startupError) return <main className="loading-screen">{startupError}</main>;
   if (!devotional || !appState) return <main className="loading-screen">Preparing today’s quiet moment…</main>;
   const openReader = (view = "today") => { setReaderView(view); setMode("reader"); desktop.setMode("reader"); };
   const closeReader = () => { setSelectedDate(isoDate()); setMode("card"); desktop.setMode("card"); };

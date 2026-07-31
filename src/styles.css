@@ -20,14 +20,19 @@ button { color: inherit; }
 .card-shade { position: absolute; inset: 0; background: radial-gradient(circle at 72% 18%, rgba(255,200,112,.08), transparent 42%), linear-gradient(180deg, rgba(13,16,12,calc(var(--overlay, .38) * .25)), rgba(13,16,12,calc(var(--overlay, .38) * .68)) 42%, rgba(12,15,11,.72) 84%, rgba(17,20,15,.84)); }
 .drag-bar, .reader-header { -webkit-app-region: drag; }
 button, select, input { -webkit-app-region: no-drag; }
-.drag-bar { position: relative; height: 78px; padding: 20px 22px; display: flex; justify-content: space-between; align-items: flex-start; }
+.drag-bar { position: relative; height: 58px; padding: 0 22px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.52)); border-bottom: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(8px); }
 .brand-mark, .wordmark { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
 .brand-mark span, .wordmark span { font-size: 10px; letter-spacing: .2em; font-weight: 600; }
 .brand-mark em, .wordmark em { font-family: Georgia, serif; font-size: 14px; color: var(--accent, #d8bd7f); margin-top: 4px; }
 .window-controls { display: flex; gap: 5px; }
 .window-controls button { border: 0; background: rgba(18,20,16,.36); width: 29px; height: 29px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
 .window-controls button:hover { background: rgba(255,255,255,.18); }
-.verse-card { position: absolute; inset: 78px 0 72px; padding: 18px 36px 24px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; }
+.window-controls button:last-child { color: #ff5f62; }
+.window-controls button:last-child:hover { background: rgba(190,35,43,.28); color: #ff7b7e; }
+.header-clock { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: flex-start; gap: 4px; color: rgba(255,255,255,.9); font-size: 10px; line-height: 1.15; letter-spacing: .03em; white-space: nowrap; pointer-events: none; text-align: left; text-shadow: 0 1px 5px rgba(0,0,0,.75); }
+.header-clock span { display: flex; align-items: center; gap: 5px; }
+.header-clock strong { color: color-mix(in srgb, var(--accent) 68%, white); font-size: 8px; text-transform: uppercase; letter-spacing: .12em; }
+.verse-card { position: absolute; inset: 58px 0 72px; padding: 18px 36px 24px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; }
 .eyebrow { display: flex; align-items: center; gap: 9px; font-size: 11px; text-transform: uppercase; letter-spacing: .18em; color: rgba(255,255,255,.78); }
 .eyebrow-line { width: 26px; height: 1px; background: var(--accent, #d8bd7f); }
 blockquote { width: 100%; margin: 18px 0 11px; font-family: Georgia, serif; font-size: 30px; line-height: 1.24; letter-spacing: -.02em; text-align: left; text-shadow: 0 2px 18px rgba(0,0,0,.28); }
@@ -43,6 +48,7 @@ blockquote { width: 100%; margin: 18px 0 11px; font-family: Georgia, serif; font
 .footer-actions { display: flex; gap: 5px; }
 .footer-actions button, .reading-tools button { border: 0; background: transparent; padding: 5px; color: rgba(255,255,255,.55); cursor: pointer; }
 .footer-actions button:hover, .footer-actions button.active { color: color-mix(in srgb, var(--accent, #e8ca8c) 68%, white); }
+.footer-actions button:disabled, .action-row button:disabled { opacity: .35; cursor: not-allowed; }
 .card-toast { position: absolute; left: 50%; bottom: 65px; z-index: 4; transform: translateX(-50%); border: 1px solid rgba(255,255,255,.22); border-radius: 9px; background: rgba(7,8,8,.88); color: #f5f6f7; padding: 9px 13px; font-size: 10px; font-weight: 600; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.32); backdrop-filter: blur(8px); }
 
 .reader-shell { border-radius: 19px; background: var(--paper); color: var(--text); --accent: #6f8ea8; --deep: #415a70; --paper: #f8fafc; --text: #24303b; --body-text: #434d56; --muted-text: #707b85; --subtle-text: #89939c; --surface: rgba(255,255,255,.42); --line: rgba(36,48,59,.12); }

@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { inQuietHours, minutesFromClock, dateKey } = require("../electron/scheduler.cjs");
+const { ReminderScheduler, inQuietHours, minutesFromClock, dateKey } = require("../electron/scheduler.cjs");
 
 test("clock strings convert to minutes", () => {
   assert.equal(minutesFromClock("09:30"), 570);
@@ -22,4 +22,32 @@ test("same-day quiet hours", () => {
 
 test("notification date keys use local calendar dates", () => {
   assert.equal(dateKey(new Date(2026, 6, 30, 12)), "2026-07-30");
+});
+
+test("next reminder respects fixed times, quiet hours, and snooze state", () => {
+  const state = {
+    snoozeUntil: 0,
+    settings: {
+      activeDays: [1], reminderMode: "times", reminderTimes: ["09:00", "12:00"], intervalMinutes: 60,
+      quietHours: { enabled: true, start: "08:30", end: "10:00" },
+    },
+  };
+  const scheduler = new ReminderScheduler({ store: { get: () => state }, notify() {} });
+  const monday = new Date(2026, 7, 3, 8, 0, 0, 0);
+  assert.equal(scheduler.nextReminder(monday, state), new Date(2026, 7, 3, 12, 0, 0, 0).getTime());
+  state.snoozeUntil = new Date(2026, 7, 3, 12, 30, 0, 0).getTime();
+  assert.equal(scheduler.nextReminder(monday, state), new Date(2026, 7, 10, 12, 0, 0, 0).getTime());
+});
+
+test("next interval reminder skips quiet hours", () => {
+  const state = {
+    snoozeUntil: 0,
+    settings: {
+      activeDays: [1, 2, 3, 4, 5], reminderMode: "interval", reminderTimes: [], intervalMinutes: 90,
+      quietHours: { enabled: true, start: "18:00", end: "08:00" },
+    },
+  };
+  const scheduler = new ReminderScheduler({ store: { get: () => state }, notify() {} });
+  const monday = new Date(2026, 7, 3, 7, 15, 0, 0);
+  assert.equal(scheduler.nextReminder(monday, state), new Date(2026, 7, 3, 9, 0, 0, 0).getTime());
 });
