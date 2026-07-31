@@ -12,9 +12,9 @@ There are no subscriptions, advertisements, accounts, or paid features. The app 
 
 | Daily Scripture card | Expanded devotional reader |
 | --- | --- |
-| ![Work Day with God daily Scripture card](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/Adverts/ijTay.jpg) | ![Work Day with God expanded devotional reader](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/Adverts/7fbJC.jpg) |
+| ![Work Day with God daily Scripture card](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/screenshots/ijTay.jpg) | ![Work Day with God expanded devotional reader](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/screenshots/7fbJC.jpg) |
 | **Reading history** | **Settings and reminders** |
-| ![Work Day with God calendar and reading history](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/Adverts/DnmHh.jpg) | ![Work Day with God reminder and startup settings](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/Adverts/UV6ZZ.jpg) |
+| ![Work Day with God calendar and reading history](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/screenshots/DnmHh.jpg) | ![Work Day with God reminder and startup settings](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/screenshots/UV6ZZ.jpg) |
 
 ## What the app offers
 
