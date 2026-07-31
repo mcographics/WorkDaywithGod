@@ -56,6 +56,18 @@ Work Day with God is completely free for Christians to use.
 
 The application stores its local preferences and reading history in Electron’s Windows application-data directory. A backup is maintained so malformed state can be recovered safely.
 
+## Copyright, free use, and licensing
+
+**Work Day with God is provided completely free of charge.** There is no purchase price, subscription fee, advertising charge, or required donation. Everyone may download, install, and use the official application without payment.
+
+Copyright © 2026 Kenneth Salmon / Work Day with God. All rights reserved unless a separate licence or attribution notice explicitly states otherwise.
+
+“Free of charge” describes the cost of using the application; it does not place the project in the public domain or transfer ownership of its source code, devotional writing, branding, interface design, or original artwork. The project and its original materials may not be sold, repackaged, redistributed, modified for redistribution, or presented as another person’s work without prior written permission from the copyright owner.
+
+Bundled Bible translations, open-source software libraries, scenic source materials, and other third-party components remain subject to their respective copyright, public-domain, and licence terms. Further details are available in [Content and Asset Provenance](CONTENT_AND_ASSET_PROVENANCE.md).
+
+The application is provided “as is,” without warranties or guarantees. For permissions or copyright questions, contact [kenneth.salmon87@outlook.com](mailto:kenneth.salmon87@outlook.com).
+
 ## Bible translations
 
 The daily devotional quotation remains in the King James Version. The full-chapter reader allows the user to choose from these locally bundled historical translations:
