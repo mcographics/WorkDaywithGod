@@ -1,0 +1,156 @@
+const fs = require("fs");
+const path = require("path");
+
+const STORE_VERSION = 1;
+const DEFAULT_SETTINGS = Object.freeze({
+  launchAtLogin: true,
+  closeToTray: true,
+  showStartupCard: true,
+  startInTray: false,
+  notificationsEnabled: true,
+  notificationSound: false,
+  remindLaterMinutes: 60,
+  reminderMode: "times",
+  reminderTimes: ["09:00", "12:00", "15:00", "17:00"],
+  intervalMinutes: 60,
+  activeDays: [1, 2, 3, 4, 5],
+  quietHours: { enabled: true, start: "18:00", end: "08:00" },
+  theme: "gold",
+  colorMode: "system",
+  imageOverlay: 38,
+  imageTransition: true,
+  focusMode: false,
+  fontScale: 1,
+  scriptureFontScale: 1,
+  reducedMotion: false,
+  autoScrollEnabled: true,
+  autoScrollSpeed: 2,
+  hoverPausesScroll: true,
+  rememberReadingPosition: true,
+  showReflectionPrompt: true,
+  showPrayer: true,
+  showAttribution: true,
+  automaticDailyContent: true,
+  automaticDailyImage: true,
+  preventFutureDevotionals: false,
+  showStreak: true,
+  translation: "KJV",
+});
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeSettings(input = {}) {
+  const next = { ...clone(DEFAULT_SETTINGS), ...input };
+  next.reminderMode = ["times", "interval"].includes(next.reminderMode) ? next.reminderMode : "times";
+  next.reminderTimes = Array.isArray(next.reminderTimes)
+    ? [...new Set(next.reminderTimes.filter((time) => /^([01]\d|2[0-3]):[0-5]\d$/.test(time)))].sort()
+    : clone(DEFAULT_SETTINGS.reminderTimes);
+  next.intervalMinutes = Math.min(720, Math.max(15, Number(next.intervalMinutes) || 60));
+  next.activeDays = Array.isArray(next.activeDays)
+    ? [...new Set(next.activeDays.map(Number).filter((day) => day >= 0 && day <= 6))].sort()
+    : clone(DEFAULT_SETTINGS.activeDays);
+  next.quietHours = {
+    ...clone(DEFAULT_SETTINGS.quietHours),
+    ...(input.quietHours || {}),
+  };
+  next.fontScale = Math.min(1.4, Math.max(0.8, Number(next.fontScale) || 1));
+  next.scriptureFontScale = Math.min(1.4, Math.max(0.8, Number(next.scriptureFontScale) || 1));
+  next.imageOverlay = Math.min(75, Math.max(10, Number(next.imageOverlay) || 38));
+  next.remindLaterMinutes = Math.min(1440, Math.max(5, Number(next.remindLaterMinutes) || 60));
+  next.autoScrollSpeed = Math.min(4, Math.max(1, Number(next.autoScrollSpeed) || 2));
+  return next;
+}
+
+function normalizeState(input = {}) {
+  return {
+    version: STORE_VERSION,
+    settings: normalizeSettings(input.settings),
+    favourites: Array.isArray(input.favourites) ? [...new Set(input.favourites.filter(String))] : [],
+    completions: input.completions && typeof input.completions === "object" ? input.completions : {},
+    readingPositions: input.readingPositions && typeof input.readingPositions === "object" ? input.readingPositions : {},
+    snoozeUntil: Number(input.snoozeUntil) || 0,
+    lastNotificationKey: typeof input.lastNotificationKey === "string" ? input.lastNotificationKey : "",
+    migrationComplete: Boolean(input.migrationComplete),
+  };
+}
+
+class AppStore {
+  constructor(userDataPath) {
+    this.filePath = path.join(userDataPath, "work-day-with-god.json");
+    this.backupPath = `${this.filePath}.backup`;
+    this.state = normalizeState();
+    this.load();
+  }
+
+  load() {
+    try {
+      this.state = normalizeState(JSON.parse(fs.readFileSync(this.filePath, "utf8")));
+    } catch (error) {
+      if (error.code !== "ENOENT") {
+        try {
+          fs.copyFileSync(this.filePath, `${this.filePath}.corrupt-${Date.now()}`);
+        } catch {}
+      }
+      this.state = normalizeState();
+      this.save();
+    }
+    return this.get();
+  }
+
+  save() {
+    const directory = path.dirname(this.filePath);
+    fs.mkdirSync(directory, { recursive: true });
+    const temporaryPath = `${this.filePath}.${process.pid}.tmp`;
+    const serialized = JSON.stringify(this.state, null, 2);
+    fs.writeFileSync(temporaryPath, serialized, "utf8");
+    if (fs.existsSync(this.filePath)) {
+      try { fs.copyFileSync(this.filePath, this.backupPath); } catch {}
+    }
+    fs.renameSync(temporaryPath, this.filePath);
+  }
+
+  get() {
+    return clone(this.state);
+  }
+
+  patchSettings(patch) {
+    this.state.settings = normalizeSettings({ ...this.state.settings, ...patch });
+    this.save();
+    return this.get();
+  }
+
+  patchState(patch) {
+    this.state = normalizeState({ ...this.state, ...patch, settings: this.state.settings });
+    this.save();
+    return this.get();
+  }
+
+  importLegacy(legacy) {
+    if (this.state.migrationComplete) return this.get();
+    const settings = {};
+    if (legacy?.theme) settings.theme = legacy.theme;
+    if (legacy?.fontScale) settings.fontScale = legacy.fontScale;
+    if (legacy?.translation) settings.translation = legacy.translation;
+    this.state.settings = normalizeSettings({ ...this.state.settings, ...settings });
+    if (Array.isArray(legacy?.favourites)) this.state.favourites = [...new Set(legacy.favourites)];
+    this.state.migrationComplete = true;
+    this.save();
+    return this.get();
+  }
+
+  replace(input) {
+    this.state = normalizeState(input);
+    this.save();
+    return this.get();
+  }
+
+  reset() {
+    this.state = normalizeState();
+    this.save();
+    return this.get();
+  }
+}
+
+module.exports = { AppStore, DEFAULT_SETTINGS, normalizeSettings };

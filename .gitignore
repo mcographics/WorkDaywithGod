@@ -1,0 +1,18 @@
+node_modules/
+dist/
+release/
+
+# DATA is a local source library. Only the nine translation caches used by
+# Work Day with God belong in this repository.
+data/*
+!data/electron_cache/
+data/electron_cache/*
+!data/electron_cache/ASV.json
+!data/electron_cache/DBT.json
+!data/electron_cache/DRB.json
+!data/electron_cache/ERV.json
+!data/electron_cache/GENEVA_BIBLE1560.json
+!data/electron_cache/JPS.json
+!data/electron_cache/KJV.json
+!data/electron_cache/WBT.json
+!data/electron_cache/YLT.json
