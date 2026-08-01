@@ -65,3 +65,26 @@ test("invalid imported appearance, translation, booleans, and quiet hours recove
   assert.deepEqual(state.settings.quietHours, { enabled: true, start: "18:00", end: "08:00" });
   fs.rmSync(directory, { recursive: true, force: true });
 });
+
+test("imported history and favourites discard unsafe keys and values", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "wdwg-store-"));
+  const store = new AppStore(directory);
+  const state = store.replace({
+    favourites: ["07-30", "07-30", "../../escape", { id: "07-31" }],
+    completions: {
+      "2026-07-30": 123456,
+      "../../escape": 987654,
+      "2026-07-31": "not-a-timestamp",
+    },
+    readingPositions: {
+      "2026-07-30": 420,
+      "2026-07-31": -10,
+      "not-a-date": 900,
+      "2026-08-01": Number.POSITIVE_INFINITY,
+    },
+  });
+  assert.deepEqual(state.favourites, ["07-30"]);
+  assert.deepEqual(state.completions, { "2026-07-30": 123456 });
+  assert.deepEqual(state.readingPositions, { "2026-07-30": 420 });
+  fs.rmSync(directory, { recursive: true, force: true });
+});

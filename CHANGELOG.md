@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-31
+
+### Security
+
+- Reviewed the packaged application paths for command execution, hidden downloads, remote runtime code, credential access, cryptocurrency mining, and untrusted navigation; none are present.
+- Restricted every renderer-to-main IPC command to the application’s trusted main window and main frame.
+- Explicitly enabled Electron web security and disabled insecure content, webviews, production developer tools, and drag-and-drop navigation.
+- Limited imported backup files to 5 MB and sanitized favourite IDs, history dates, timestamps, and reading positions before persistence.
+- Added automated regression checks for Electron isolation, sandboxing, navigation restrictions, permission denial, IPC sender validation, Content Security Policy, and the packaged-file allowlist.
+
+### Fixed
+
+- Rejected malformed or unsafe values in imported favourites, completion history, and saved reading positions.
+
 ## [1.2.0] - 2026-07-31
 
 ### Added
@@ -113,7 +127,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.0.0...v1.1.0

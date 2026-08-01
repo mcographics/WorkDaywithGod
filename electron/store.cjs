@@ -11,6 +11,8 @@ const BOOLEAN_SETTINGS = [
 const THEMES = ["gold", "blue", "forest", "burgundy", "lavender", "terracotta", "sage", "rose", "teal", "charcoal"];
 const TRANSLATIONS = ["KJV", "ASV", "DBT", "DRB", "ERV", "JPS", "WBT", "YLT", "GENEVA_BIBLE1560"];
 const validClock = (value) => typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+const validDevotionalId = (value) => typeof value === "string" && /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(value);
+const validHistoryDate = (value) => typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(value);
 const DEFAULT_SETTINGS = Object.freeze({
   launchAtLogin: true,
   closeToTray: true,
@@ -80,12 +82,26 @@ function normalizeSettings(input = {}) {
 }
 
 function normalizeState(input = {}) {
+  const completions = {};
+  if (input.completions && typeof input.completions === "object" && !Array.isArray(input.completions)) {
+    for (const [date, timestamp] of Object.entries(input.completions)) {
+      const numericTimestamp = Number(timestamp);
+      if (validHistoryDate(date) && Number.isFinite(numericTimestamp) && numericTimestamp > 0) completions[date] = numericTimestamp;
+    }
+  }
+  const readingPositions = {};
+  if (input.readingPositions && typeof input.readingPositions === "object" && !Array.isArray(input.readingPositions)) {
+    for (const [date, position] of Object.entries(input.readingPositions)) {
+      const numericPosition = Number(position);
+      if (validHistoryDate(date) && Number.isFinite(numericPosition) && numericPosition >= 0) readingPositions[date] = Math.min(numericPosition, 10_000_000);
+    }
+  }
   return {
     version: STORE_VERSION,
     settings: normalizeSettings(input.settings),
-    favourites: Array.isArray(input.favourites) ? [...new Set(input.favourites.filter(String))] : [],
-    completions: input.completions && typeof input.completions === "object" ? input.completions : {},
-    readingPositions: input.readingPositions && typeof input.readingPositions === "object" ? input.readingPositions : {},
+    favourites: Array.isArray(input.favourites) ? [...new Set(input.favourites.filter(validDevotionalId))].slice(0, 366) : [],
+    completions,
+    readingPositions,
     snoozeUntil: Number(input.snoozeUntil) || 0,
     remindAt: Number(input.remindAt) || 0,
     lastNotificationKey: typeof input.lastNotificationKey === "string" ? input.lastNotificationKey : "",
@@ -151,7 +167,7 @@ class AppStore {
     if (legacy?.fontScale) settings.fontScale = legacy.fontScale;
     if (legacy?.translation) settings.translation = legacy.translation;
     this.state.settings = normalizeSettings({ ...this.state.settings, ...settings });
-    if (Array.isArray(legacy?.favourites)) this.state.favourites = [...new Set(legacy.favourites)];
+    if (Array.isArray(legacy?.favourites)) this.state.favourites = [...new Set(legacy.favourites.filter(validDevotionalId))].slice(0, 366);
     this.state.migrationComplete = true;
     this.save();
     return this.get();

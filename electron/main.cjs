@@ -5,6 +5,7 @@ const { AppStore } = require("./store.cjs");
 const { ReminderScheduler } = require("./scheduler.cjs");
 
 const APP_ID = "com.mcographics.workdaywithgod";
+const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
 const compactSize = { width: 440, height: 610 };
 const readerSize = { width: 1040, height: 780 };
 let mainWindow;
@@ -68,6 +69,11 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webviewTag: false,
+      devTools: !app.isPackaged,
+      navigateOnDragDrop: false,
     },
   });
   mainWindow.setIcon(applicationIcon());
@@ -151,33 +157,55 @@ function applyLoginSetting(enabled) {
   });
 }
 
+function assertTrustedIpcSender(event) {
+  const trusted = mainWindow
+    && !mainWindow.isDestroyed()
+    && event.sender === mainWindow.webContents
+    && event.senderFrame === mainWindow.webContents.mainFrame;
+  if (!trusted) throw new Error("Rejected an untrusted application request.");
+}
+
+function handleTrusted(channel, handler) {
+  ipcMain.handle(channel, (event, ...args) => {
+    assertTrustedIpcSender(event);
+    return handler(...args);
+  });
+}
+
+function onTrusted(channel, handler) {
+  ipcMain.on(channel, (event, ...args) => {
+    assertTrustedIpcSender(event);
+    handler(...args);
+  });
+}
+
 function registerIpc() {
-  ipcMain.handle("state:get", () => ({ ...store.get(), scheduler: scheduler.status() }));
-  ipcMain.handle("settings:update", (_event, patch) => {
+  handleTrusted("state:get", () => ({ ...store.get(), scheduler: scheduler.status() }));
+  handleTrusted("settings:update", (patch) => {
     const state = store.patchSettings(patch);
     if (Object.prototype.hasOwnProperty.call(patch, "launchAtLogin")) applyLoginSetting(state.settings.launchAtLogin);
     rebuildTray();
     return { ...state, scheduler: scheduler.status() };
   });
-  ipcMain.handle("state:update", (_event, patch) => {
+  handleTrusted("state:update", (patch) => {
     const allowed = {};
     for (const key of ["favourites", "completions", "readingPositions"]) if (Object.prototype.hasOwnProperty.call(patch, key)) allowed[key] = patch[key];
     const state = store.patchState(allowed);
     return { ...state, scheduler: scheduler.status() };
   });
-  ipcMain.handle("state:migrate", (_event, legacy) => store.importLegacy(legacy));
-  ipcMain.handle("reminders:snooze", (_event, until) => {
+  handleTrusted("state:migrate", (legacy) => store.importLegacy(legacy));
+  handleTrusted("reminders:snooze", (until) => {
     setSnooze(Math.max(0, Number(until) || 0));
     return scheduler.status();
   });
-  ipcMain.handle("reminders:later", (_event, until) => {
+  handleTrusted("reminders:later", (until) => {
     const remindAt = Math.max(Date.now() + 60_000, Number(until) || 0);
     const state = store.patchState({ remindAt, snoozeUntil: remindAt });
     rebuildTray();
     mainWindow?.webContents.send("app:state-changed", state);
     return { ...state, scheduler: scheduler.status() };
   });
-  ipcMain.handle("notifications:test", () => {
+  handleTrusted("notifications:test", () => {
     if (!Notification.isSupported()) return { supported: false };
     const settings = store.get().settings;
     const testNotification = new Notification({
@@ -189,8 +217,8 @@ function registerIpc() {
     testNotification.show();
     return { supported: true };
   });
-  ipcMain.handle("data:open-folder", () => shell.openPath(app.getPath("userData")));
-  ipcMain.handle("data:export", async () => {
+  handleTrusted("data:open-folder", () => shell.openPath(app.getPath("userData")));
+  handleTrusted("data:export", async () => {
     const result = await dialog.showSaveDialog(mainWindow, {
       title: "Export Work Day with God data",
       defaultPath: path.join(app.getPath("documents"), "work-day-with-god-backup.json"),
@@ -200,38 +228,40 @@ function registerIpc() {
     fs.writeFileSync(result.filePath, JSON.stringify(store.get(), null, 2), "utf8");
     return { canceled: false, filePath: result.filePath };
   });
-  ipcMain.handle("data:import", async () => {
+  handleTrusted("data:import", async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: "Import Work Day with God data",
       properties: ["openFile"],
       filters: [{ name: "JSON backup", extensions: ["json"] }],
     });
     if (result.canceled || !result.filePaths[0]) return { canceled: true };
-    const imported = JSON.parse(fs.readFileSync(result.filePaths[0], "utf8"));
+    const importPath = result.filePaths[0];
+    if (fs.statSync(importPath).size > MAX_BACKUP_BYTES) throw new Error("That backup is larger than the 5 MB safety limit.");
+    const imported = JSON.parse(fs.readFileSync(importPath, "utf8"));
     const state = store.replace(imported);
     applyLoginSetting(state.settings.launchAtLogin);
     rebuildTray();
     mainWindow.webContents.send("app:state-changed", state);
     return { canceled: false, state };
   });
-  ipcMain.handle("data:reset-history", () => store.patchState({ completions: {}, readingPositions: {} }));
-  ipcMain.handle("data:reset-favourites", () => store.patchState({ favourites: [] }));
-  ipcMain.handle("data:reset-all", () => {
+  handleTrusted("data:reset-history", () => store.patchState({ completions: {}, readingPositions: {} }));
+  handleTrusted("data:reset-favourites", () => store.patchState({ favourites: [] }));
+  handleTrusted("data:reset-all", () => {
     const state = store.reset();
     applyLoginSetting(state.settings.launchAtLogin);
     rebuildTray();
     mainWindow.webContents.send("app:state-changed", state);
     return state;
   });
-  ipcMain.handle("app:info", () => ({
+  handleTrusted("app:info", () => ({
     version: app.getVersion(),
     notificationSupported: Notification.isSupported(),
     userDataPath: app.getPath("userData"),
   }));
-  ipcMain.handle("support:email", () => shell.openExternal("mailto:kenneth.salmon87@outlook.com?subject=Work%20Day%20with%20God%20Support"));
-  ipcMain.on("window:minimize", () => mainWindow?.minimize());
-  ipcMain.on("window:close", () => mainWindow?.close());
-  ipcMain.on("window:set-mode", (_event, mode) => {
+  handleTrusted("support:email", () => shell.openExternal("mailto:kenneth.salmon87@outlook.com?subject=Work%20Day%20with%20God%20Support"));
+  onTrusted("window:minimize", () => mainWindow?.minimize());
+  onTrusted("window:close", () => mainWindow?.close());
+  onTrusted("window:set-mode", (mode) => {
     if (!mainWindow) return;
     const size = mode === "reader" ? readerSize : compactSize;
     mainWindow.setMinimumSize(mode === "reader" ? 800 : compactSize.width, mode === "reader" ? 640 : compactSize.height);
