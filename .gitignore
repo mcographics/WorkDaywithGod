@@ -1,18 +1,34 @@
 node_modules/
 dist/
 release/
+/adverts/
+/tmp/
 .scene-candidates.json
 scene-download.log
 scene-download.err.log
 scene-library-build.log
 scene-library-build.err.log
 /scene-library/
-electronegativity-report.csv
+electronegativity-*.csv
 installer-build.log
 installer-build.err.log
 .smoke-profile/
 smoke-app.log
 smoke-app.err.log
+
+# Local tooling, operating-system, editor, test, and environment files.
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+coverage/
+.nyc_output/
+.vite/
 
 # DATA is a local source library. Only the nine translation caches used by
 # Work Day with God belong in this repository.
