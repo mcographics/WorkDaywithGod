@@ -20,7 +20,7 @@ There are no subscriptions, advertisements, accounts, or paid features. The app 
 
 ## What the app offers
 
-- 366 explicitly Christ-centred daily devotionals, including a dedicated February 29 entry
+- 366 explicitly Christ-centred daily devotionals.
 - A unique scenic background for every day
 - Encouraging KJV anchor verses, with roughly three quarters drawn from the New Testament and hope-filled pastoral selections from the Old Testament
 - Original reflections, practical questions, closing thoughts, and prayers that point readers to Jesus or Christ
