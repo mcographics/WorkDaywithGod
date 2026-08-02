@@ -4,7 +4,7 @@
 
 Work Day with God is a peaceful Windows desktop companion created to help Christians pause, read Scripture, reflect, and pray throughout the working day.
 
-**[Download the latest release](https://github.com/mcographics/WorkDaywithGod/releases/latest)** · **[Changelog](CHANGELOG.md)** · **[Security policy](SECURITY.md)**
+**[Download the latest release](https://github.com/mcographics/WorkDaywithGod/releases/latest)** · **[Discord support](https://discord.gg/2UvdpY4JSW)** · **[Changelog](CHANGELOG.md)** · **[Security policy](SECURITY.md)**
 
 Each calendar day presents a Bible verse, an original devotional reflection, a practical question, a short prayer, and a scenic background. Gentle reminders can be scheduled around your day, while the app remains quietly available from the Windows system tray.
 
@@ -20,10 +20,10 @@ There are no subscriptions, advertisements, accounts, or paid features. The app 
 
 ## What the app offers
 
-- 366 daily devotionals, including a dedicated February 29 entry
+- 366 explicitly Christ-centred daily devotionals, including a dedicated February 29 entry
 - A unique scenic background for every day
-- KJV anchor verses with original Work Day with God reflections
-- Practical reflection questions and short daily prayers
+- Encouraging KJV anchor verses, with roughly three quarters drawn from the New Testament and hope-filled pastoral selections from the Old Testament
+- Original reflections, practical questions, closing thoughts, and prayers that point readers to Jesus or Christ
 - Compact devotional card and expanded reading view
 - Full Bible chapter reading in nine bundled translations
 - Custom reminder times or repeating reminder intervals
@@ -56,6 +56,12 @@ Work Day with God is completely free for Christians to use.
 
 The application stores its local preferences and reading history in Electron’s platform-specific application-data directory. A backup is maintained so malformed state can be recovered safely.
 
+## Support and feedback
+
+For application support, feedback, or bug reports, join the official [Work Day with God Discord server](https://discord.gg/2UvdpY4JSW).
+
+Discord is optional and is not required to use Work Day with God. The application remains completely offline after installation, requires no account or subscription, and does not send reading activity to Discord or another remote service.
+
 ## Copyright, free use, and licensing
 
 **Work Day with God is provided completely free of charge.** There is no purchase price, subscription fee, advertising charge, or required donation. Everyone may download, install, and use the official application without payment.
@@ -84,21 +90,23 @@ The daily devotional quotation remains in the King James Version. The full-chapt
 
 ## Installing on Windows
 
-Download the latest `Work-Day-with-God-Setup` executable from the project’s Releases page and run it.
+The current stable release is **Work Day with God 1.3.0 for Windows x64**. Download `Work-Day-with-God-Setup-1.3.0.exe` from the [latest GitHub release](https://github.com/mcographics/WorkDaywithGod/releases/latest) and run it.
 
 The current public build is an unsigned, per-user Windows installer. Windows SmartScreen may show an **Unknown publisher** warning. Review the downloaded file and choose **More info** followed by **Run anyway** if you trust the release.
 
 The installer creates a Start Menu shortcut and offers a desktop shortcut. Uninstalling the application preserves personal settings unless those files are removed manually.
 
-## Installing on Linux
+## Linux status
 
-Linux x64 releases are available in three formats:
+The current stable 1.3.0 release is available for Windows x64. Experimental Linux packages from the earlier 1.2.2 testing preview remain available for evaluation, but Linux packages are not included with the latest stable release and Linux support should currently be considered preliminary.
+
+The experimental Linux packages use three formats:
 
 - **AppImage** for a portable application that runs across many distributions without installation. Make it executable with `chmod +x` before launching it.
 - **DEB** for Debian, Ubuntu, Linux Mint, and other Debian-based distributions.
 - **RPM** for Fedora, RHEL, openSUSE, and other RPM-based distributions.
 
-The Linux packages are currently unsigned. Distribution security policies may display a warning or require the user to confirm installation.
+The experimental Linux packages are unsigned. Distribution security policies may display a warning or require the user to confirm installation.
 
 ## For developers
 
@@ -125,7 +133,7 @@ Create the Windows installer:
 npm run dist:win
 ```
 
-On Windows, create Linux x64 AppImage, DEB, and RPM packages through Docker Desktop’s Linux engine:
+For experimental testing, Windows developers can create Linux x64 AppImage, DEB, and RPM packages through Docker Desktop’s Linux engine:
 
 ```powershell
 npm run dist:linux:docker
