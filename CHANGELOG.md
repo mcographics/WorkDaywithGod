@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-08-02
+
+### Fixed
+
+- Replaced Electron’s default atom icon on the Windows taskbar by binding the live window to the packaged executable’s Work Day with God icon resource, using the multi-resolution `.ico` at runtime, and adding native 20 px and 40 px high-DPI taskbar sizes.
+
 ## [1.4.0] - 2026-08-02
 
 ### Added
@@ -181,7 +187,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.1...v1.2.2

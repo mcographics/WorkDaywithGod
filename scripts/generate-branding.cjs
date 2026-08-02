@@ -4,7 +4,8 @@ const sharp = require("sharp");
 
 const root = path.join(__dirname, "..");
 const source = path.join(root, "icon.png");
-const sizes = [16, 24, 32, 48, 64, 128, 256];
+// Include native Windows taskbar sizes at 100%, 125%, and common high-DPI scaling.
+const sizes = [16, 20, 24, 32, 40, 48, 64, 128, 256];
 
 async function createWindowsIcon(images) {
   const headerSize = 6 + images.length * 16;

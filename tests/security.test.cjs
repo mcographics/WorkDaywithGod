@@ -41,6 +41,14 @@ test("development startup uses a dedicated strict Vite port", () => {
   assert.match(mainSource, /app\.setPath\("sessionData"/);
 });
 
+test("Windows taskbar identity uses the multi-resolution application icon", () => {
+  assert.match(mainSource, /process\.platform === "win32" \? path\.join\("build", "icon\.ico"\)/);
+  assert.match(mainSource, /mainWindow\.setAppDetails\(\{/);
+  assert.match(mainSource, /appId: APP_ID/);
+  assert.match(mainSource, /appIconPath: app\.isPackaged \? process\.execPath : sourceIconPath\(\)/);
+  assert.match(mainSource, /appIconIndex: 0/);
+});
+
 test("content security policy blocks remote scripts and embedded objects", () => {
   assert.match(indexSource, /default-src 'self'/);
   assert.match(indexSource, /script-src 'self'/);

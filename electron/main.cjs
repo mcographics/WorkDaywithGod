@@ -25,7 +25,8 @@ app.setAppUserModelId(APP_ID);
 if (!app.requestSingleInstanceLock()) app.quit();
 
 function sourceIconPath() {
-  return path.join(__dirname, "..", "icon.png");
+  const iconFile = process.platform === "win32" ? path.join("build", "icon.ico") : "icon.png";
+  return path.join(__dirname, "..", iconFile);
 }
 
 function applicationIcon() {
@@ -82,12 +83,20 @@ function createWindow() {
     },
   });
   mainWindow.setIcon(applicationIcon());
+  if (process.platform === "win32") {
+    mainWindow.setAppDetails({
+      appId: APP_ID,
+      appIconPath: app.isPackaged ? process.execPath : sourceIconPath(),
+      appIconIndex: 0,
+    });
+  }
 
   placeBottomRight(mainWindow, compactSize);
   const devUrl = process.env.VITE_DEV_SERVER_URL || "http://127.0.0.1:5183";
   if (!app.isPackaged) mainWindow.loadURL(devUrl);
   else mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   mainWindow.once("ready-to-show", () => {
+    mainWindow.setIcon(applicationIcon());
     const settings = store.get().settings;
     if (settings.showStartupCard && !settings.startInTray) mainWindow.show();
   });
