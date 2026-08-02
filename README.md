@@ -54,7 +54,7 @@ Work Day with God is completely free for Christians to use.
 - No personal reading information is sent to a server.
 - Settings, favourites, history, streaks, and reminder state remain on your computer.
 
-The application stores its local preferences and reading history in Electron’s Windows application-data directory. A backup is maintained so malformed state can be recovered safely.
+The application stores its local preferences and reading history in Electron’s platform-specific application-data directory. A backup is maintained so malformed state can be recovered safely.
 
 ## Copyright, free use, and licensing
 
@@ -90,6 +90,16 @@ The current public build is an unsigned, per-user Windows installer. Windows Sma
 
 The installer creates a Start Menu shortcut and offers a desktop shortcut. Uninstalling the application preserves personal settings unless those files are removed manually.
 
+## Installing on Linux
+
+Linux x64 releases are available in three formats:
+
+- **AppImage** for a portable application that runs across many distributions without installation. Make it executable with `chmod +x` before launching it.
+- **DEB** for Debian, Ubuntu, Linux Mint, and other Debian-based distributions.
+- **RPM** for Fedora, RHEL, openSUSE, and other RPM-based distributions.
+
+The Linux packages are currently unsigned. Distribution security policies may display a warning or require the user to confirm installation.
+
 ## For developers
 
 Node.js 22.12 or newer is recommended.
@@ -115,7 +125,13 @@ Create the Windows installer:
 npm run dist:win
 ```
 
-The installer is written to the local `release` directory.
+On Windows, create Linux x64 AppImage, DEB, and RPM packages through Docker Desktop’s Linux engine:
+
+```powershell
+npm run dist:linux:docker
+```
+
+Docker Desktop must be running. The build uses the date-pinned `electronuserland/builder:22-05.26` image and stores reusable dependency caches in Docker volumes. Windows and Linux packages are written to the local `release` directory.
 
 ## Content and artwork
 

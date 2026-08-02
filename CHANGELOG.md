@@ -8,6 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [1.2.2] - 2026-08-02
 
+### Added
+
+- Added Linux x64 packaging for AppImage, DEB, and RPM distributions.
+- Added a repeatable Docker-based Linux build command for Windows development machines.
+
 ### Fixed
 
 - Made the **Verse card** action return directly to the compact Verse Card after opening a devotional from either History or Future Devotionals.

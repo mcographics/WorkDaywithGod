@@ -42,6 +42,7 @@ test("packager uses an explicit application-file allowlist", () => {
   assert.deepEqual(packageJson.build.files, [
     "dist/**/*",
     "electron/**/*",
+    "build/icon.png",
     "build/icon.ico",
     "icon.png",
     "package.json",
