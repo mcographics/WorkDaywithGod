@@ -98,7 +98,7 @@ The installer creates a Start Menu shortcut and offers a desktop shortcut. Unins
 
 ## Linux status
 
-The current stable 1.3.0 release is available for Windows x64. Experimental Linux packages from the earlier 1.2.2 testing preview remain available for evaluation, but Linux packages are not included with the latest stable release and Linux support should currently be considered preliminary.
+Experimental Linux packages from the earlier 1.2.2 testing preview remain available for evaluation, but Linux packages are not included with the latest stable release and Linux support should currently be considered preliminary.
 
 The experimental Linux packages use three formats:
 
