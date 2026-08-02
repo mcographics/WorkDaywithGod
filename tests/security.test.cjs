@@ -35,6 +35,10 @@ test("development startup uses a dedicated strict Vite port", () => {
   assert.match(packageJson.scripts.dev, /vite --host 127\.0\.0\.1 --port 5183 --strictPort/);
   assert.match(packageJson.scripts.dev, /wait-on http:\/\/127\.0\.0\.1:5183 && electron \./);
   assert.doesNotMatch(packageJson.scripts.dev, /127\.0\.0\.1:5173/);
+  assert.match(mainSource, /if \(!app\.isPackaged\)/);
+  assert.match(mainSource, /Work Day with God Development/);
+  assert.match(mainSource, /app\.setPath\("userData"/);
+  assert.match(mainSource, /app\.setPath\("sessionData"/);
 });
 
 test("content security policy blocks remote scripts and embedded objects", () => {

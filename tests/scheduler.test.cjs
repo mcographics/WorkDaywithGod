@@ -51,3 +51,26 @@ test("next interval reminder skips quiet hours", () => {
   const monday = new Date(2026, 7, 3, 7, 15, 0, 0);
   assert.equal(scheduler.nextReminder(monday, state), new Date(2026, 7, 3, 9, 0, 0, 0).getTime());
 });
+
+test("clearing every active day disables and clears a pending timer", () => {
+  let notified = false;
+  const state = {
+    remindAt: Date.now() - 1000,
+    snoozeUntil: Date.now() + 60_000,
+    settings: {
+      notificationsEnabled: true,
+      activeDays: [], reminderMode: "times", reminderTimes: ["09:00"], intervalMinutes: 60,
+      quietHours: { enabled: false, start: "18:00", end: "08:00" },
+    },
+  };
+  const store = {
+    get: () => state,
+    patchState: (patch) => Object.assign(state, patch),
+  };
+  const scheduler = new ReminderScheduler({ store, notify: () => { notified = true; } });
+  scheduler.tick(false);
+  assert.equal(notified, false);
+  assert.equal(state.remindAt, 0);
+  assert.equal(state.snoozeUntil, 0);
+  assert.equal(scheduler.nextReminder(new Date(), state), null);
+});

@@ -11,7 +11,7 @@ test("store creates defaults and persists validated settings", () => {
   assert.equal(store.get().settings.launchAtLogin, true);
   store.patchSettings({ intervalMinutes: 2, reminderTimes: ["09:00", "bad"] });
   const reloaded = new AppStore(directory).get();
-  assert.equal(reloaded.settings.intervalMinutes, 15);
+  assert.equal(reloaded.settings.intervalMinutes, 2);
   assert.deepEqual(reloaded.settings.reminderTimes, ["09:00"]);
   fs.rmSync(directory, { recursive: true, force: true });
 });
@@ -30,21 +30,33 @@ test("expanded settings and reading state persist", () => {
   const store = new AppStore(directory);
   store.patchSettings({
     notificationsEnabled: false,
-    colorMode: "dark",
+    colorMode: "auto",
     theme: "teal",
     scriptureFontScale: 1.25,
     imageOverlay: 55,
-    remindLaterMinutes: 20,
+    remindLaterMinutes: 24,
   });
   store.patchState({ readingPositions: { "2026-07-30": 420 } });
   const state = new AppStore(directory).get();
   assert.equal(state.settings.notificationsEnabled, false);
-  assert.equal(state.settings.colorMode, "dark");
+  assert.equal(state.settings.colorMode, "auto");
   assert.equal(state.settings.theme, "teal");
   assert.equal(state.settings.scriptureFontScale, 1.25);
   assert.equal(state.settings.imageOverlay, 55);
   assert.equal(state.settings.remindLaterMinutes, 20);
   assert.equal(state.readingPositions["2026-07-30"], 420);
+  fs.rmSync(directory, { recursive: true, force: true });
+});
+
+test("reminder minute ranges and ten-minute remind-later increments are normalized", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "wdwg-store-"));
+  const store = new AppStore(directory);
+  assert.equal(store.patchSettings({ intervalMinutes: -4 }).settings.intervalMinutes, 1);
+  assert.equal(store.patchSettings({ intervalMinutes: 121 }).settings.intervalMinutes, 120);
+  assert.equal(store.patchSettings({ intervalMinutes: 37.6 }).settings.intervalMinutes, 38);
+  assert.equal(store.patchSettings({ remindLaterMinutes: 9 }).settings.remindLaterMinutes, 10);
+  assert.equal(store.patchSettings({ remindLaterMinutes: 67 }).settings.remindLaterMinutes, 70);
+  assert.equal(store.patchSettings({ remindLaterMinutes: 999 }).settings.remindLaterMinutes, 90);
   fs.rmSync(directory, { recursive: true, force: true });
 });
 

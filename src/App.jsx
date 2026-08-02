@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight,
   Clock3, Heart, History, Info, MessageCircle, Minus, Pause, Play, RotateCcw, Settings, SlidersHorizontal, UserRound, X,
@@ -6,6 +7,30 @@ import {
 import { calendarStartMonth, isAdjacentReadingAvailable, isCalendarDateAvailable } from "./calendar.mjs";
 import { calculateStreak, dateId, devotionalForDate, isoDate, loadCatalogue } from "./catalogue";
 import { getChapter, translations } from "./scripture";
+import { isSunUp } from "./solar.mjs";
+
+function useResolvedColourMode(colourMode) {
+  const [position, setPosition] = useState(null);
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (colourMode !== "auto") return undefined;
+    setNow(new Date());
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    let active = true;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => active && setPosition({ latitude: coords.latitude, longitude: coords.longitude }),
+        () => {},
+        { enableHighAccuracy: false, maximumAge: 24 * 60 * 60 * 1000, timeout: 5000 },
+      );
+    }
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [colourMode]);
+  return colourMode === "auto" ? (isSunUp(now, position) ? "light" : "dark") : colourMode;
+}
 
 const defaultSettings = {
   launchAtLogin: true, closeToTray: true, showStartupCard: true, startInTray: false,
@@ -19,6 +44,8 @@ const defaultSettings = {
   automaticDailyContent: true, automaticDailyImage: true, preventFutureDevotionals: false, showStreak: true,
   translation: "KJV",
 };
+const intervalMinuteOptions = Array.from({ length: 120 }, (_, index) => index + 1);
+const remindLaterOptions = Array.from({ length: 9 }, (_, index) => (index + 1) * 10);
 let browserState = { settings: { ...defaultSettings }, favourites: [], completions: {}, readingPositions: {}, snoozeUntil: 0, remindAt: 0, migrationComplete: true };
 const browserStateSnapshot = () => ({
   ...browserState,
@@ -96,6 +123,13 @@ function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, se
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const verseLengthClass = devotional.verse.length > 240 ? "verse-extra-long" : devotional.verse.length > 140 ? "verse-long" : "";
+  const hasActiveDays = settings.activeDays.length > 0;
+  const reminderAvailable = settings.notificationsEnabled && hasActiveDays;
+  const reminderTitle = !hasActiveDays
+    ? "Please select a day in Schedule style in Settings to start the timer."
+    : settings.notificationsEnabled
+      ? `Remind me again in ${settings.remindLaterMinutes} minutes`
+      : "Enable notifications in Settings to use Remind me later";
   const scheduleReminder = async () => {
     const until = await onSnooze();
     setReminderMessage(`Reminder set for ${new Date(until).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`);
@@ -115,7 +149,7 @@ function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, se
       <div><span className="status-dot" /> {settings.showStreak && streak ? `${streak}-day reading streak` : "A quiet reminder for your day"}</div>
       <div className="footer-actions">
         <button title={favourite ? "Remove today from favourites" : "Save today to favourites"} className={favourite ? "active" : ""} onClick={onFavourite} aria-label="Favourite"><Heart size={17} fill={favourite ? "currentColor" : "none"} /></button>
-        <button disabled={!settings.notificationsEnabled} title={settings.notificationsEnabled ? `Remind me again in ${settings.remindLaterMinutes} minutes` : "Enable notifications in Settings to use Remind me later"} aria-label={settings.notificationsEnabled ? `Remind me in ${settings.remindLaterMinutes} minutes` : "Remind me later unavailable because notifications are off"} onClick={scheduleReminder}><Clock3 size={17} /></button>
+        <span className="timer-action" title={reminderTitle}><button disabled={!reminderAvailable} aria-label={reminderAvailable ? `Remind me in ${settings.remindLaterMinutes} minutes` : reminderTitle} onClick={scheduleReminder}><Clock3 size={17} /></button></span>
         <button title="Open application settings" aria-label="Settings" onClick={() => onRead("settings")}><SlidersHorizontal size={17} /></button>
       </div>
     </footer>
@@ -313,17 +347,18 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
         <div className="setting-row"><div><h3>Notification sound</h3><p>Allow Windows to play its notification sound.</p></div><Toggle label="Notification sound" checked={settings.notificationSound} onChange={(notificationSound) => onPatchSettings({ notificationSound })} /></div>
         <div className="setting-row stack"><div><h3>Schedule style</h3><p>Choose fixed reminder times or a repeating minute interval.</p></div><div className="segmented"><button title="Send reminders at the individual times listed below" className={settings.reminderMode === "times" ? "selected" : ""} onClick={() => onPatchSettings({ reminderMode: "times" })}>Specific times</button><button title="Repeat reminders after a chosen number of minutes" className={settings.reminderMode === "interval" ? "selected" : ""} onClick={() => onPatchSettings({ reminderMode: "interval" })}>Interval</button></div></div>
         {settings.reminderMode === "times" ? <div className="time-list" title="Times when notifications may be sent on active weekdays">{settings.reminderTimes.map((time, index) => <label title={`Reminder scheduled for ${time}`} key={`${time}-${index}`}><input aria-label={`Reminder time ${index + 1}`} type="time" value={time} onChange={(event) => updateTime(index, event.target.value)} /><button title={`Remove the ${time} reminder`} aria-label={`Remove ${time}`} onClick={() => onPatchSettings({ reminderTimes: settings.reminderTimes.filter((_, itemIndex) => itemIndex !== index) })}><X size={12} /></button></label>)}<button title="Add another specific reminder time" onClick={() => onPatchSettings({ reminderTimes: [...settings.reminderTimes, "10:00"].sort() })}>+ Add time</button></div>
-          : <label title="Set how many minutes pass between reminders" className="field-label"><span><strong>Reminder interval</strong><small>Minutes between notifications during active hours.</small></span><span className="number-field"><input aria-label="Reminder interval in minutes" type="number" min="15" max="720" step="5" value={settings.intervalMinutes} onChange={(event) => onPatchSettings({ intervalMinutes: Number(event.target.value) })} /> minutes</span></label>}
+          : <label title="Set how many minutes pass between reminders" className="field-label"><span><strong>Reminder interval</strong><small>Choose any whole-minute interval from 1 to 120 minutes.</small></span><select aria-label="Reminder interval in minutes" value={settings.intervalMinutes} onChange={(event) => onPatchSettings({ intervalMinutes: Number(event.target.value) })}>{intervalMinuteOptions.map((minutes) => <option key={minutes} value={minutes}>{minutes} {minutes === 1 ? "minute" : "minutes"}</option>)}</select></label>}
         <div className="weekday-picker" title="Choose which weekdays may send devotional reminders">{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((label, day) => <button title={`${settings.activeDays.includes(day) ? "Disable" : "Enable"} reminders on ${label}`} key={label} className={settings.activeDays.includes(day) ? "selected" : ""} onClick={() => toggleDay(day)}>{label}</button>)}</div>
+        {!settings.activeDays.length && <div className="schedule-warning" role="status">Select at least one day to enable scheduled reminders and the Verse Card timer.</div>}
         <div className="setting-row"><div><h3>Quiet hours</h3><p>No notifications during this period.</p></div><Toggle label="Quiet hours" checked={settings.quietHours.enabled} onChange={(enabled) => updateQuiet({ enabled })} /></div>
         {settings.quietHours.enabled && <div className="quiet-times" title="Notifications remain silent between these local times"><input aria-label="Quiet hours start time" type="time" value={settings.quietHours.start} onChange={(event) => updateQuiet({ start: event.target.value })} /><span>to</span><input aria-label="Quiet hours end time" type="time" value={settings.quietHours.end} onChange={(event) => updateQuiet({ end: event.target.value })} /></div>}
-        <div className="snooze-row"><Bell size={18} /><span>{paused ? `Paused until ${new Date(appState.snoozeUntil).toLocaleString()}` : "Reminders are active"}</span>{paused ? <button title="End the current pause and resume scheduled reminders" onClick={() => onSnooze(0)}>Resume</button> : <><button title="Temporarily stop reminders for the next hour" onClick={() => onSnooze(Date.now() + 60 * 60 * 1000)}>Pause 1 hour</button><button title="Stop reminders until midnight tonight" onClick={() => { const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0,0,0,0); onSnooze(tomorrow.getTime()); }}>Until tomorrow</button></>}</div>
-        <label title="Set the snooze duration used by the Verse Card clock button" className="field-label"><span><strong>“Remind me later” duration</strong><small>How long the Verse Card clock button pauses reminders.</small></span><span className="number-field"><input aria-label="Remind me later duration in minutes" type="number" min="5" max="1440" value={settings.remindLaterMinutes} onChange={(event) => onPatchSettings({ remindLaterMinutes: Number(event.target.value) })} /> minutes</span></label>
+        <div className="snooze-row"><Bell size={18} /><span>{!settings.activeDays.length ? "Reminders are inactive until a day is selected" : paused ? `Paused until ${new Date(appState.snoozeUntil).toLocaleString()}` : "Reminders are active"}</span>{settings.activeDays.length > 0 && (paused ? <button title="End the current pause and resume scheduled reminders" onClick={() => onSnooze(0)}>Resume</button> : <><button title="Temporarily stop reminders for the next hour" onClick={() => onSnooze(Date.now() + 60 * 60 * 1000)}>Pause 1 hour</button><button title="Stop reminders until midnight tonight" onClick={() => { const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0,0,0,0); onSnooze(tomorrow.getTime()); }}>Until tomorrow</button></>)}</div>
+        <label title="Set the snooze duration used by the Verse Card clock button" className="field-label"><span><strong>“Remind me later” duration</strong><small>Choose from 10 to 90 minutes in 10-minute increments.</small></span><select aria-label="Remind me later duration in minutes" value={settings.remindLaterMinutes} onChange={(event) => onPatchSettings({ remindLaterMinutes: Number(event.target.value) })}>{remindLaterOptions.map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}</select></label>
         <div className="action-row"><button disabled={!settings.notificationsEnabled} title={settings.notificationsEnabled ? "Display a sample Windows notification using the current notification settings" : "Enable notifications before sending a test notification"} onClick={() => run(async () => { const result = await desktop.testNotification(); if (!result.supported) throw new Error("Windows notifications are unavailable on this system."); return result; }, "Test notification sent.")}>Send test notification</button></div>
       </div>
       <div className="settings-group"><h2>Appearance & reading</h2>
         <div className="theme-options expanded">{["gold","blue","forest","burgundy","lavender","terracotta","sage","rose","teal","charcoal"].map((theme) => <button title={`Use the ${theme} accent colour throughout the app`} key={theme} className={settings.theme === theme ? "chosen" : ""} onClick={() => onPatchSettings({ theme })}><i className={theme} />{theme}</button>)}</div>
-        <label title="Choose whether the reader follows Windows or uses a fixed light or dark appearance" className="field-label"><span><strong>Colour mode</strong><small>Controls the overall light or dark reading appearance.</small></span><select aria-label="Colour mode" value={settings.colorMode} onChange={(event) => onPatchSettings({ colorMode: event.target.value })}><option value="system">Follow Windows</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+        <label title="Choose an automatic sunrise-to-sunset appearance, follow Windows, or use a fixed mode" className="field-label"><span><strong>Colour mode</strong><small>Auto uses light mode from local sunrise to sunset, then switches to dark.</small></span><select aria-label="Colour mode" value={settings.colorMode} onChange={(event) => onPatchSettings({ colorMode: event.target.value })}><option value="auto">Auto · sunrise to sunset</option><option value="system">Follow Windows</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
         <label title="Choose the translation used when reading a complete Bible chapter" className="field-label"><span><strong>Bible translation</strong><small>Used in the full-chapter drawer; daily anchor quotations remain KJV.</small></span><select aria-label="Bible translation" value={settings.translation} onChange={(event) => onPatchSettings({ translation: event.target.value })}>{translations.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select></label>
         <label title="Adjust the size of devotional reflection paragraphs and questions" className="range-field"><span><strong>Devotional text size</strong><small>Changes the main reflection text, not the Verse Card or Scripture drawer.</small></span><input aria-label="Devotional text size" type="range" min=".8" max="1.4" step=".05" value={settings.fontScale} onChange={(event) => onPatchSettings({ fontScale: Number(event.target.value) })} /></label>
         <label title="Adjust the text size inside the full-chapter Scripture drawer" className="range-field"><span><strong>Scripture text size</strong><small>Changes Bible verses in the full-chapter reader.</small></span><input aria-label="Scripture text size" type="range" min=".8" max="1.4" step=".05" value={settings.scriptureFontScale} onChange={(event) => onPatchSettings({ scriptureFontScale: Number(event.target.value) })} /></label>
@@ -357,7 +392,33 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
 
 function Reader({ catalogue, devotional, selectedDate, settings, appState, initialView, onBack, onSelectDate, onPatchSettings, onPatchState, onSnooze }) {
   const [view, setView] = useState(initialView || "today");
+  const [contentVisible, setContentVisible] = useState(true);
+  const contentTimers = useRef([]);
+  const resolvedColourMode = useResolvedColourMode(settings.colorMode);
+  const navigateView = (nextView) => {
+    if (nextView === view) return;
+    for (const timer of contentTimers.current) window.clearTimeout(timer);
+    contentTimers.current = [];
+    if (settings.reducedMotion) {
+      setContentVisible(true);
+      setView(nextView);
+      return;
+    }
+    setContentVisible(false);
+    const swapTimer = window.setTimeout(() => {
+      setView(nextView);
+      const revealTimer = window.setTimeout(() => {
+        setContentVisible(true);
+        contentTimers.current = [];
+      }, 30);
+      contentTimers.current = [revealTimer];
+    }, 190);
+    contentTimers.current = [swapTimer];
+  };
   useEffect(() => setView(initialView || "today"), [initialView]);
+  useEffect(() => () => {
+    for (const timer of contentTimers.current) window.clearTimeout(timer);
+  }, []);
   useEffect(() => {
     if (settings.preventFutureDevotionals && (view === "future" || view === "future-reading")) {
       onSelectDate(new Date());
@@ -373,17 +434,17 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
   const favourite = appState.favourites.includes(devotional.id);
   const showToday = () => {
     onSelectDate(new Date());
-    setView("today");
+    navigateView("today");
   };
   const showFuture = () => {
     onSelectDate(new Date());
-    setView("future");
+    navigateView("future");
   };
   const showHistory = () => {
     const previousDate = new Date();
     previousDate.setDate(previousDate.getDate() - 1);
     onSelectDate(previousDate);
-    setView("history");
+    navigateView("history");
   };
   const toggleFavourite = () => onPatchState({ favourites: favourite ? appState.favourites.filter((id) => id !== devotional.id) : [...appState.favourites, devotional.id] });
   const toggleComplete = () => {
@@ -392,22 +453,24 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
     else completions[selectedDate] = Date.now();
     onPatchState({ completions });
   };
-  return <main className={`reader-shell theme-${settings.theme} accent-${settings.theme} mode-${settings.colorMode} ${settings.reducedMotion ? "reduced-motion" : ""}`}>
+  return <main className={`reader-shell theme-${settings.theme} accent-${settings.theme} mode-${resolvedColourMode} ${settings.reducedMotion ? "reduced-motion" : ""}`}>
     <header className="reader-header">
       <button title="Return to the compact Verse Card" className="wordmark" onClick={onBack}><span>WORK DAY</span><em>with God</em></button>
       <nav>
         <button title="Open the devotional assigned to today’s local date" className={view === "today" ? "selected" : ""} onClick={showToday}><BookOpen size={16} /> Today</button>
         {!settings.preventFutureDevotionals && <button title="Browse devotionals assigned to today and later dates" className={view === "future" || view === "future-reading" ? "selected" : ""} onClick={showFuture}><CalendarDays size={16} /> Future Devotionals</button>}
         <button title="Browse devotional dates before today and review reading activity" className={view === "history" || view === "history-reading" ? "selected" : ""} onClick={showHistory}><History size={16} /> History</button>
-        <button title="Configure reminders, appearance, reading behavior, and local data" className={view === "settings" ? "selected" : ""} onClick={() => setView("settings")}><Settings size={16} /> Settings</button>
+        <button title="Configure reminders, appearance, reading behavior, and local data" className={view === "settings" ? "selected" : ""} onClick={() => navigateView("settings")}><Settings size={16} /> Settings</button>
       </nav><WindowControls />
     </header>
-    {view === "today" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="today" settings={settings} appState={appState} onBack={onBack} onSettings={() => setView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
-    {view === "history" && <CalendarView key="history" catalogue={catalogue} appState={appState} mode="history" onSelectDate={(date) => { onSelectDate(date); setView("history-reading"); }} />}
-    {view === "history-reading" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="past" settings={settings} appState={appState} onBack={onBack} onSettings={() => setView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
-    {view === "future" && !settings.preventFutureDevotionals && <CalendarView key="future" catalogue={catalogue} appState={appState} mode="future" onSelectDate={(date) => { onSelectDate(date); setView("future-reading"); }} />}
-    {view === "future-reading" && !settings.preventFutureDevotionals && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="future" settings={settings} appState={appState} onBack={onBack} onSettings={() => setView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
-    {view === "settings" && <SettingsView settings={settings} appState={appState} onBack={onBack} onPatchSettings={onPatchSettings} onSnooze={onSnooze} onPatchState={onPatchState} />}
+    <div className={`reader-content ${contentVisible ? "content-visible" : "content-hidden"} ${settings.reducedMotion ? "content-no-motion" : ""}`}>
+      {view === "today" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="today" settings={settings} appState={appState} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
+      {view === "history" && <CalendarView key="history" catalogue={catalogue} appState={appState} mode="history" onSelectDate={(date) => { onSelectDate(date); navigateView("history-reading"); }} />}
+      {view === "history-reading" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="past" settings={settings} appState={appState} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
+      {view === "future" && !settings.preventFutureDevotionals && <CalendarView key="future" catalogue={catalogue} appState={appState} mode="future" onSelectDate={(date) => { onSelectDate(date); navigateView("future-reading"); }} />}
+      {view === "future-reading" && !settings.preventFutureDevotionals && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="future" settings={settings} appState={appState} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
+      {view === "settings" && <SettingsView settings={settings} appState={appState} onBack={onBack} onPatchSettings={onPatchSettings} onSnooze={onSnooze} onPatchState={onPatchState} />}
+    </div>
   </main>;
 }
 
@@ -415,12 +478,37 @@ export default function App() {
   const [catalogue, setCatalogue] = useState([]);
   const [appState, setAppState] = useState(null);
   const [mode, setMode] = useState("card");
+  const [surfaceVisible, setSurfaceVisible] = useState(true);
   const [readerView, setReaderView] = useState("today");
   const [selectedDate, setSelectedDate] = useState(() => isoDate());
   const [startupError, setStartupError] = useState("");
   const stateRevision = useRef(0);
+  const reducedMotion = useRef(false);
+  const surfaceTimers = useRef([]);
+  reducedMotion.current = Boolean(appState?.settings.reducedMotion);
   const selectedCalendarDate = useMemo(() => new Date(`${selectedDate}T12:00:00`), [selectedDate]);
   const devotional = catalogue.length ? devotionalForDate(catalogue, selectedCalendarDate) : null;
+  const transitionSurface = (nextMode, update) => {
+    for (const timer of surfaceTimers.current) window.clearTimeout(timer);
+    surfaceTimers.current = [];
+    if (reducedMotion.current) {
+      setSurfaceVisible(true);
+      update();
+      desktop.setMode(nextMode);
+      return;
+    }
+    setSurfaceVisible(false);
+    const swapTimer = window.setTimeout(() => {
+      flushSync(update);
+      desktop.setMode(nextMode);
+      const revealTimer = window.setTimeout(() => {
+        setSurfaceVisible(true);
+        surfaceTimers.current = [];
+      }, 220);
+      surfaceTimers.current = [revealTimer];
+    }, 260);
+    surfaceTimers.current = [swapTimer];
+  };
 
   useEffect(() => {
     let active = true;
@@ -439,19 +527,29 @@ export default function App() {
       if (active) setAppState(state);
     }).catch((error) => active && setStartupError(error.message || "The application could not be opened."));
     const removeNavigate = desktop.onNavigate((view) => {
-      setReaderView(view === "settings" ? "settings" : "today");
-      if (view !== "settings") setSelectedDate(isoDate());
-      setMode("reader"); desktop.setMode("reader");
+      transitionSurface("reader", () => {
+        setReaderView(view === "settings" ? "settings" : "today");
+        if (view !== "settings") setSelectedDate(isoDate());
+        setMode("reader");
+      });
     });
     const removeDate = desktop.onOpenDate((id) => {
       const year = new Date().getFullYear();
-      setSelectedDate(`${year}-${id}`); setReaderView("today"); setMode("reader"); desktop.setMode("reader");
+      transitionSurface("reader", () => {
+        setSelectedDate(`${year}-${id}`);
+        setReaderView("today");
+        setMode("reader");
+      });
     });
     const removeState = desktop.onStateChanged((state) => {
       stateRevision.current += 1;
       setAppState(state);
     });
-    return () => { active = false; removeNavigate(); removeDate(); removeState(); };
+    return () => {
+      active = false;
+      for (const timer of surfaceTimers.current) window.clearTimeout(timer);
+      removeNavigate(); removeDate(); removeState();
+    };
   }, []);
 
   useEffect(() => {
@@ -463,8 +561,12 @@ export default function App() {
 
   if (startupError) return <main className="loading-screen">{startupError}</main>;
   if (!devotional || !appState) return <main className="loading-screen">Preparing today’s quiet moment…</main>;
-  const openReader = (view = "today") => { setReaderView(view); setMode("reader"); desktop.setMode("reader"); };
-  const closeReader = () => { setSelectedDate(isoDate()); setMode("card"); desktop.setMode("card"); };
+  const openReader = (view = "today") => {
+    transitionSurface("reader", () => { setReaderView(view); setMode("reader"); });
+  };
+  const closeReader = () => {
+    transitionSurface("card", () => { setSelectedDate(isoDate()); setMode("card"); });
+  };
   const patchSettings = async (patch) => setAppState(await desktop.updateSettings(patch));
   const patchState = async (patch, replace = false) => {
     const revision = ++stateRevision.current;
@@ -489,11 +591,13 @@ export default function App() {
     return until;
   };
   const favourite = appState.favourites.includes(devotional.id);
-  return mode === "card"
-    ? <Card devotional={devotional} favourite={favourite} streak={calculateStreak(appState.completions)} settings={appState.settings}
-      onRead={openReader} onSnooze={onRemindLater}
-      onFavourite={() => patchState({ favourites: favourite ? appState.favourites.filter((id) => id !== devotional.id) : [...appState.favourites, devotional.id] })} />
-    : <Reader catalogue={catalogue} devotional={devotional} selectedDate={selectedDate} settings={appState.settings} appState={appState}
-      initialView={readerView} onBack={closeReader} onSelectDate={(date) => setSelectedDate(isoDate(date))}
-      onPatchSettings={patchSettings} onPatchState={patchState} onSnooze={onSnooze} />;
+  return <div className={`app-surface ${surfaceVisible ? "surface-visible" : "surface-hidden"} ${appState.settings.reducedMotion ? "surface-no-motion" : ""}`}>
+    {mode === "card"
+      ? <Card devotional={devotional} favourite={favourite} streak={calculateStreak(appState.completions)} settings={appState.settings}
+        onRead={openReader} onSnooze={onRemindLater}
+        onFavourite={() => patchState({ favourites: favourite ? appState.favourites.filter((id) => id !== devotional.id) : [...appState.favourites, devotional.id] })} />
+      : <Reader catalogue={catalogue} devotional={devotional} selectedDate={selectedDate} settings={appState.settings} appState={appState}
+        initialView={readerView} onBack={closeReader} onSelectDate={(date) => setSelectedDate(isoDate(date))}
+        onPatchSettings={patchSettings} onPatchState={patchState} onSnooze={onSnooze} />}
+  </div>;
 }

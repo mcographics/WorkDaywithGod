@@ -16,6 +16,11 @@ let isQuitting = false;
 let devotionalCatalogue = [];
 
 app.setName("Work Day with God");
+if (!app.isPackaged) {
+  const developmentUserData = path.join(app.getPath("appData"), "Work Day with God Development");
+  app.setPath("userData", developmentUserData);
+  app.setPath("sessionData", path.join(developmentUserData, "Session Data"));
+}
 app.setAppUserModelId(APP_ID);
 if (!app.requestSingleInstanceLock()) app.quit();
 
@@ -100,8 +105,12 @@ function createWindow() {
     const current = mainWindow.webContents.getURL();
     if (url !== current) event.preventDefault();
   });
-  mainWindow.webContents.session.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
-  mainWindow.webContents.session.setPermissionCheckHandler(() => false);
+  mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    callback(webContents === mainWindow.webContents && permission === "geolocation");
+  });
+  mainWindow.webContents.session.setPermissionCheckHandler((webContents, permission) => (
+    webContents === mainWindow.webContents && permission === "geolocation"
+  ));
 }
 
 function trayImage() {
@@ -182,7 +191,10 @@ function onTrusted(channel, handler) {
 function registerIpc() {
   handleTrusted("state:get", () => ({ ...store.get(), scheduler: scheduler.status() }));
   handleTrusted("settings:update", (patch) => {
-    const state = store.patchSettings(patch);
+    let state = store.patchSettings(patch);
+    if (Object.prototype.hasOwnProperty.call(patch, "activeDays") && state.settings.activeDays.length === 0) {
+      state = store.patchState({ remindAt: 0, snoozeUntil: 0 });
+    }
     if (Object.prototype.hasOwnProperty.call(patch, "launchAtLogin")) applyLoginSetting(state.settings.launchAtLogin);
     rebuildTray();
     return { ...state, scheduler: scheduler.status() };
@@ -199,6 +211,9 @@ function registerIpc() {
     return scheduler.status();
   });
   handleTrusted("reminders:later", (until) => {
+    const current = store.get();
+    if (!current.settings.notificationsEnabled) throw new Error("Enable notifications in Settings to use Remind me later.");
+    if (!current.settings.activeDays.length) throw new Error("Please select a day in Schedule style in Settings to start the timer.");
     const remindAt = Math.max(Date.now() + 60_000, Number(until) || 0);
     const state = store.patchState({ remindAt, snoozeUntil: remindAt });
     rebuildTray();

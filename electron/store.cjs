@@ -56,13 +56,13 @@ function normalizeSettings(input = {}) {
   const next = { ...clone(DEFAULT_SETTINGS), ...input };
   for (const key of BOOLEAN_SETTINGS) next[key] = typeof input[key] === "boolean" ? input[key] : DEFAULT_SETTINGS[key];
   next.theme = THEMES.includes(next.theme) ? next.theme : DEFAULT_SETTINGS.theme;
-  next.colorMode = ["system", "light", "dark"].includes(next.colorMode) ? next.colorMode : DEFAULT_SETTINGS.colorMode;
+  next.colorMode = ["system", "auto", "light", "dark"].includes(next.colorMode) ? next.colorMode : DEFAULT_SETTINGS.colorMode;
   next.translation = TRANSLATIONS.includes(next.translation) ? next.translation : DEFAULT_SETTINGS.translation;
   next.reminderMode = ["times", "interval"].includes(next.reminderMode) ? next.reminderMode : "times";
   next.reminderTimes = Array.isArray(next.reminderTimes)
     ? [...new Set(next.reminderTimes.filter(validClock))].sort()
     : clone(DEFAULT_SETTINGS.reminderTimes);
-  next.intervalMinutes = Math.min(720, Math.max(15, Number(next.intervalMinutes) || 60));
+  next.intervalMinutes = Math.min(120, Math.max(1, Math.round(Number(next.intervalMinutes) || 60)));
   next.activeDays = Array.isArray(next.activeDays)
     ? [...new Set(next.activeDays.map(Number).filter((day) => day >= 0 && day <= 6))].sort()
     : clone(DEFAULT_SETTINGS.activeDays);
@@ -76,7 +76,7 @@ function normalizeSettings(input = {}) {
   next.fontScale = Math.min(1.4, Math.max(0.8, Number(next.fontScale) || 1));
   next.scriptureFontScale = Math.min(1.4, Math.max(0.8, Number(next.scriptureFontScale) || 1));
   next.imageOverlay = Math.min(75, Math.max(10, Number(next.imageOverlay) || 38));
-  next.remindLaterMinutes = Math.min(1440, Math.max(5, Number(next.remindLaterMinutes) || 60));
+  next.remindLaterMinutes = Math.min(90, Math.max(10, Math.round((Number(next.remindLaterMinutes) || 60) / 10) * 10));
   next.autoScrollSpeed = Math.min(4, Math.max(1, Number(next.autoScrollSpeed) || 2));
   return next;
 }

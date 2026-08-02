@@ -3,6 +3,9 @@
 html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
 button, select, input { font: inherit; }
 button { color: inherit; }
+.app-surface { width: 100%; height: 100%; opacity: 1; filter: blur(0); transform: scale(1); transform-origin: center; transition: opacity .26s cubic-bezier(.4,0,.2,1), filter .26s cubic-bezier(.4,0,.2,1), transform .26s cubic-bezier(.4,0,.2,1); will-change: opacity, filter, transform; }
+.app-surface.surface-hidden { opacity: 0; filter: blur(4px); transform: scale(.992); pointer-events: none; }
+.app-surface.surface-no-motion { transition: none; filter: none; transform: none; }
 .compact-shell, .reader-shell {
   position: relative;
   width: 100%;
@@ -46,6 +49,7 @@ blockquote { width: 100%; margin: 18px 0 11px; font-family: Georgia, serif; font
 .compact-footer { position: absolute; left: 25px; right: 25px; bottom: 21px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,.58); }
 .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent, #d8bd7f); margin-right: 7px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #d8bd7f) 18%, transparent); }
 .footer-actions { display: flex; gap: 5px; }
+.timer-action { display: inline-flex; }
 .footer-actions button, .reading-tools button { border: 0; background: transparent; padding: 5px; color: rgba(255,255,255,.55); cursor: pointer; }
 .footer-actions button:hover, .footer-actions button.active { color: color-mix(in srgb, var(--accent, #e8ca8c) 68%, white); }
 .footer-actions button:disabled, .action-row button:disabled { opacity: .35; cursor: not-allowed; }
@@ -53,6 +57,10 @@ blockquote { width: 100%; margin: 18px 0 11px; font-family: Georgia, serif; font
 
 .reader-shell { border-radius: 19px; background: var(--paper); color: var(--text); --accent: #6f8ea8; --deep: #415a70; --paper: #f8fafc; --text: #24303b; --body-text: #434d56; --muted-text: #707b85; --subtle-text: #89939c; --surface: rgba(255,255,255,.42); --line: rgba(36,48,59,.12); }
 .reader-header { height: 68px; padding: 0 20px 0 25px; background: var(--deep); display: flex; align-items: center; color: #f7f1e5; }
+.reader-content { height: calc(100% - 68px); overflow: hidden; position: relative; border-radius: 0 0 18px 18px; contain: paint; isolation: isolate; opacity: 1; filter: blur(0); transform: scale(1); transform-origin: center; transition: opacity .22s cubic-bezier(.4,0,.2,1), filter .22s cubic-bezier(.4,0,.2,1), transform .22s cubic-bezier(.4,0,.2,1); }
+.reader-content.content-hidden { opacity: 0; filter: blur(3px); transform: scale(.996); pointer-events: none; }
+.reader-content.content-no-motion { transition: none; filter: none; transform: none; }
+.reader-content > .reader-layout, .reader-content > .panel-view { height: 100%; }
 .wordmark { border: 0; background: transparent; width: 180px; cursor: pointer; }
 .reader-header nav { display: flex; gap: 4px; margin: auto; }
 .reader-header nav button { border: 0; background: transparent; border-radius: 8px; padding: 8px 9px; display: flex; gap: 6px; align-items: center; font-size: 10px; color: rgba(255,255,255,.56); cursor: pointer; white-space: nowrap; }
@@ -195,6 +203,7 @@ blockquote { width: 100%; margin: 18px 0 11px; font-family: Georgia, serif; font
 .weekday-picker { justify-content: space-between; }
 .weekday-picker button { width: 42px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted-text); padding: 8px 4px; font-size: 8px; cursor: pointer; }
 .weekday-picker button.selected { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); }
+.schedule-warning { border-top: 1px solid color-mix(in srgb, #b5634d 28%, transparent); background: color-mix(in srgb, #b5634d 9%, transparent); color: #9b503e; padding: 10px 20px; font-size: 10px; line-height: 1.4; }
 .quiet-times span { color: var(--muted-text); font-size: 9px; }
 .snooze-row { color: var(--muted-text); font-size: 12px; }.snooze-row span { flex: 1; }
 .field-label, .range-field { min-height: 54px; border-top: 1px solid var(--line); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; color: var(--text); font-size: 12px; }

@@ -6,6 +6,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-08-02
+
+### Added
+
+- Added an **Auto** colour mode that uses the device’s location to keep the reader light from local sunrise to sunset and dark overnight.
+- Added an offline local-time fallback for Auto colour mode when location is unavailable or permission is declined.
+- Added an in-app schedule warning when every active reminder day has been cleared.
+
+### Changed
+
+- Replaced the repeating reminder interval number field with a dropdown containing every whole minute from 1 through 120.
+- Replaced the Verse Card’s **Remind me later** number field with a dropdown containing 10-minute increments from 10 through 90 minutes.
+- Reworked navigation between reader tabs and between the reader and compact Verse Card with staged fade-dissolve transitions.
+- Limited Electron’s renderer permission handling to geolocation requested by the trusted application window for Auto colour mode; all other renderer permissions remain denied.
+- Preserved immediate navigation for users who enable **Reduced motion**.
+
+### Fixed
+
+- Disabled the Verse Card clock button when no schedule days are selected and added a tooltip directing the user to **Schedule style** in Settings.
+- Prevented renderer or IPC calls from starting **Remind me later** while notifications are disabled or no schedule day is active.
+- Cancelled pending one-off reminders and snooze state when the final active schedule day is cleared.
+- Updated the scheduler so a stored timer cannot fire while the schedule has no active days.
+- Isolated development user data and Chromium caches from the installed application so `npm run dev` no longer collides with a running installed copy.
+- Staged the Verse Card/reader resize between a complete fade-out and fade-in so the native window resize no longer causes an abrupt screen swap.
+- Replaced full-window tab snapshots with a clipped content-layer dissolve, keeping the header and rounded window frame continuously rendered and removing four-corner and blank-frame artifacts.
+
 ## [1.3.0] - 2026-08-02
 
 ### Changed
@@ -155,7 +181,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.0...v1.2.1

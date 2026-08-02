@@ -77,6 +77,11 @@ class ReminderScheduler {
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     this.lastTickAt = now.getTime();
 
+    if (!settings.activeDays.length) {
+      if (state.remindAt > 0 || state.snoozeUntil > 0) this.store.patchState({ remindAt: 0, snoozeUntil: 0 });
+      return;
+    }
+
     if (state.remindAt > 0 && state.remindAt <= now.getTime()) {
       const wasRecentlyDue = now.getTime() - state.remindAt <= 5 * 60 * 1000;
       this.store.patchState({ remindAt: 0, snoozeUntil: 0 });
