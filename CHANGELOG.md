@@ -6,15 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-08-02
+
 ### Changed
 
 - Rebuilt all 366 daily devotionals around an explicitly Christ-centred, encouraging pastoral content policy.
 - Limited Old Testament Verse Card anchors to hope-filled pastoral passages and made roughly three quarters of all daily anchors New Testament passages.
+- Replaced the support email shown in Settings with the official Work Day with God Discord support server.
 
 ### Fixed
 
 - Prevented isolated verses about judgment, violence, condemnation, distress, and other context-dependent themes from being selected as daily encouragement.
 - Added automated content-policy checks so future catalogue rebuilds cannot silently reintroduce unsuitable Verse Card anchors or generic reflections that do not name Jesus or Christ.
+- Isolated the development server on a dedicated strict port so another local Vite application cannot appear inside the Verse Card window.
 
 ## [1.2.2] - 2026-08-02
 
@@ -151,7 +155,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.2...v1.3.0
+[1.2.2]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.1.0...v1.1.1
