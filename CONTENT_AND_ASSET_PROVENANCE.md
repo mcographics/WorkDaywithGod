@@ -46,7 +46,7 @@ The installed application does not generate content with AI, connect to an AI se
 
 The 366 daily entries in `public/content/devotionals.json` were developed specifically for Work Day with God. They were not deliberately copied or adapted from a third-party devotional book, website, sermon, or subscription service.
 
-The devotional system uses a project-specific set of themes, titles, openings, reflections, closing thoughts, practical questions, and prayers. `scripts/generate-content.cjs` selects suitable KJV anchor passages and deterministically assembles those components into calendar entries. The project owner guided the desired tone and subject matter and reviewed the resulting experience.
+The devotional system uses a project-specific set of themes, titles, openings, reflections, closing thoughts, practical questions, and prayers. `scripts/generate-content.cjs` selects KJV anchor passages from an intentionally pastoral source pool and deterministically assembles those components into calendar entries. The selector requires affirmative, encouraging language; rejects isolated passages centred on judgment, violence, condemnation, or distress; and keeps roughly three quarters of the daily anchors in the New Testament. Every assembled devotional explicitly points the reader to Jesus or Christ in its reflection, question, or prayer. The project owner guided the desired tone and subject matter and reviewed the resulting experience.
 
 The attribution `Original reflection by Work Day with God` means that the non-Scripture reflection was produced for this project rather than reproduced from a named third-party devotional publication. It should not be interpreted as a claim that the text was created without AI assistance.
 

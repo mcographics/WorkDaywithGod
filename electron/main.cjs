@@ -79,7 +79,7 @@ function createWindow() {
   mainWindow.setIcon(applicationIcon());
 
   placeBottomRight(mainWindow, compactSize);
-  const devUrl = process.env.VITE_DEV_SERVER_URL || "http://127.0.0.1:5173";
+  const devUrl = process.env.VITE_DEV_SERVER_URL || "http://127.0.0.1:5183";
   if (!app.isPackaged) mainWindow.loadURL(devUrl);
   else mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   mainWindow.once("ready-to-show", () => {
@@ -258,7 +258,7 @@ function registerIpc() {
     notificationSupported: Notification.isSupported(),
     userDataPath: app.getPath("userData"),
   }));
-  handleTrusted("support:email", () => shell.openExternal("mailto:kenneth.salmon87@outlook.com?subject=Work%20Day%20with%20God%20Support"));
+  handleTrusted("support:discord", () => shell.openExternal("https://discord.gg/2UvdpY4JSW"));
   onTrusted("window:minimize", () => mainWindow?.minimize());
   onTrusted("window:close", () => mainWindow?.close());
   onTrusted("window:set-mode", (mode) => {

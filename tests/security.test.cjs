@@ -30,6 +30,13 @@ test("navigation, permissions, and IPC senders are restricted", () => {
   assert.doesNotMatch(preloadSource, /require\(["'](?:child_process|fs|net|http|https)["']\)/);
 });
 
+test("development startup uses a dedicated strict Vite port", () => {
+  assert.match(mainSource, /http:\/\/127\.0\.0\.1:5183/);
+  assert.match(packageJson.scripts.dev, /vite --host 127\.0\.0\.1 --port 5183 --strictPort/);
+  assert.match(packageJson.scripts.dev, /wait-on http:\/\/127\.0\.0\.1:5183 && electron \./);
+  assert.doesNotMatch(packageJson.scripts.dev, /127\.0\.0\.1:5173/);
+});
+
 test("content security policy blocks remote scripts and embedded objects", () => {
   assert.match(indexSource, /default-src 'self'/);
   assert.match(indexSource, /script-src 'self'/);

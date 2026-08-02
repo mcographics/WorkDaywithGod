@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Rebuilt all 366 daily devotionals around an explicitly Christ-centred, encouraging pastoral content policy.
+- Limited Old Testament Verse Card anchors to hope-filled pastoral passages and made roughly three quarters of all daily anchors New Testament passages.
+
+### Fixed
+
+- Prevented isolated verses about judgment, violence, condemnation, distress, and other context-dependent themes from being selected as daily encouragement.
+- Added automated content-policy checks so future catalogue rebuilds cannot silently reintroduce unsuitable Verse Card anchors or generic reflections that do not name Jesus or Christ.
+
 ## [1.2.2] - 2026-08-02
 
 ### Added

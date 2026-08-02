@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight,
-  Clock3, Heart, History, Info, Mail, Minus, Pause, Play, RotateCcw, Settings, SlidersHorizontal, UserRound, X,
+  Clock3, Heart, History, Info, MessageCircle, Minus, Pause, Play, RotateCcw, Settings, SlidersHorizontal, UserRound, X,
 } from "lucide-react";
 import { calendarStartMonth, isAdjacentReadingAvailable, isCalendarDateAvailable } from "./calendar.mjs";
 import { calculateStreak, dateId, devotionalForDate, isoDate, loadCatalogue } from "./catalogue";
@@ -59,7 +59,7 @@ const desktop = window.desktop || {
     return browserStateSnapshot();
   },
   getAppInfo: async () => ({ version: "1.0.0", notificationSupported: false }),
-  openSupportEmail: async () => { window.location.href = "mailto:kenneth.salmon87@outlook.com?subject=Work%20Day%20with%20God%20Support"; },
+  openSupportDiscord: async () => { window.open("https://discord.gg/2UvdpY4JSW", "_blank", "noopener,noreferrer"); },
   onNavigate: () => () => {}, onOpenDate: () => () => {}, onStateChanged: () => () => {},
 };
 
@@ -344,7 +344,7 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
           <div className="about-settings-intro"><BookOpen size={25} /><div><h3>Work Day with God</h3><strong>Work. Faith. Purpose.</strong><p>Work Day with God is a completely free Christian devotional app for Windows, created to bring Scripture, reflection, prayer, and peaceful encouragement into your daily work routine. It works offline, requires no account or subscription, and stores your settings and reading activity locally on your computer.</p></div></div>
           <div className="about-settings-details">
             <div><UserRound size={18} /><span><small>Author / Developer</small><strong>Kenneth Salmon</strong><em>Creator and developer of Work Day with God.</em></span></div>
-            <div><Mail size={18} /><span><small>Support email</small><button title="Write an email to Work Day with God support" onClick={() => desktop.openSupportEmail()}>kenneth.salmon87@outlook.com</button><em>For support, feedback, or bug reports.</em></span></div>
+            <div><MessageCircle size={18} /><span><small>Discord support</small><button title="Join the Work Day with God support server on Discord" onClick={() => desktop.openSupportDiscord()}>discord.gg/2UvdpY4JSW</button><em>For support, feedback, or bug reports.</em></span></div>
             <div><Info size={18} /><span><small>Application version</small><strong>{appInfo?.version ? `Version ${appInfo.version}` : "Work Day with God"}</strong><em>Notifications: {appInfo?.notificationSupported ? "supported" : "unavailable"}</em></span></div>
           </div>
           <p className="about-settings-footer">Daily devotional content © Work Day with God. Scripture quotations remain subject to their respective translation terms.</p>

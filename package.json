@@ -11,7 +11,7 @@
     "branding:generate": "node scripts/generate-branding.cjs",
     "scenes:process": "node scripts/process-scenes.cjs",
     "scenes:build-library": "node scripts/build-scenes-from-library.cjs",
-    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "dev": "concurrently -k \"vite --host 127.0.0.1 --port 5183 --strictPort\" \"wait-on http://127.0.0.1:5183 && electron .\"",
     "build": "vite build",
     "preview": "vite preview",
     "start": "electron .",

@@ -18,7 +18,7 @@ contextBridge.exposeInMainWorld("desktop", Object.freeze({
   resetFavourites: () => ipcRenderer.invoke("data:reset-favourites"),
   resetAll: () => ipcRenderer.invoke("data:reset-all"),
   getAppInfo: () => ipcRenderer.invoke("app:info"),
-  openSupportEmail: () => ipcRenderer.invoke("support:email"),
+  openSupportDiscord: () => ipcRenderer.invoke("support:discord"),
   onNavigate: (callback) => {
     const handler = (_event, view) => callback(view);
     ipcRenderer.on("app:navigate", handler);
