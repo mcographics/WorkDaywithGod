@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-08-02
+
+### Fixed
+
+- Made the **Verse card** action return directly to the compact Verse Card after opening a devotional from either History or Future Devotionals.
+- Kept History strictly on past dates and made it open on the latest available past month.
+- Included today in Future Devotionals so today’s completed-reading indicator appears in its calendar.
+- Applied completed-reading changes immediately and protected newer reading state from stale persistence responses.
+
 ## [1.2.1] - 2026-07-31
 
 ### Security

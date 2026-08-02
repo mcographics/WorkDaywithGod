@@ -3,6 +3,7 @@ import {
   ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight,
   Clock3, Heart, History, Info, Mail, Minus, Pause, Play, RotateCcw, Settings, SlidersHorizontal, UserRound, X,
 } from "lucide-react";
+import { calendarStartMonth, isAdjacentReadingAvailable, isCalendarDateAvailable } from "./calendar.mjs";
 import { calculateStreak, dateId, devotionalForDate, isoDate, loadCatalogue } from "./catalogue";
 import { getChapter, translations } from "./scripture";
 
@@ -18,18 +19,45 @@ const defaultSettings = {
   automaticDailyContent: true, automaticDailyImage: true, preventFutureDevotionals: false, showStreak: true,
   translation: "KJV",
 };
-const browserState = { settings: defaultSettings, favourites: [], completions: {}, readingPositions: {}, snoozeUntil: 0, remindAt: 0, migrationComplete: true };
+let browserState = { settings: { ...defaultSettings }, favourites: [], completions: {}, readingPositions: {}, snoozeUntil: 0, remindAt: 0, migrationComplete: true };
+const browserStateSnapshot = () => ({
+  ...browserState,
+  settings: { ...browserState.settings },
+  favourites: [...browserState.favourites],
+  completions: { ...browserState.completions },
+  readingPositions: { ...browserState.readingPositions },
+});
 const desktop = window.desktop || {
   minimize() {}, close() {}, setMode() {},
-  getState: async () => browserState,
-  updateSettings: async (patch) => ({ ...browserState, settings: { ...defaultSettings, ...patch } }),
-  updateState: async (patch) => ({ ...browserState, ...patch }),
-  migrateLegacy: async () => browserState,
+  getState: async () => browserStateSnapshot(),
+  updateSettings: async (patch) => {
+    browserState = { ...browserState, settings: { ...browserState.settings, ...patch } };
+    return browserStateSnapshot();
+  },
+  updateState: async (patch) => {
+    browserState = { ...browserState, ...patch };
+    return browserStateSnapshot();
+  },
+  migrateLegacy: async () => browserStateSnapshot(),
   snooze: async () => ({}),
-  remindLater: async () => browserState,
+  remindLater: async (remindAt) => {
+    browserState = { ...browserState, remindAt, snoozeUntil: remindAt };
+    return browserStateSnapshot();
+  },
   testNotification: async () => ({ supported: false }), openDataFolder: async () => "",
   exportData: async () => ({ canceled: true }), importData: async () => ({ canceled: true }),
-  resetHistory: async () => browserState, resetFavourites: async () => browserState, resetAll: async () => browserState,
+  resetHistory: async () => {
+    browserState = { ...browserState, completions: {}, readingPositions: {} };
+    return browserStateSnapshot();
+  },
+  resetFavourites: async () => {
+    browserState = { ...browserState, favourites: [] };
+    return browserStateSnapshot();
+  },
+  resetAll: async () => {
+    browserState = { settings: { ...defaultSettings }, favourites: [], completions: {}, readingPositions: {}, snoozeUntil: 0, remindAt: 0, migrationComplete: true };
+    return browserStateSnapshot();
+  },
   getAppInfo: async () => ({ version: "1.0.0", notificationSupported: false }),
   openSupportEmail: async () => { window.location.href = "mailto:kenneth.salmon87@outlook.com?subject=Work%20Day%20with%20God%20Support"; },
   onNavigate: () => () => {}, onOpenDate: () => () => {}, onStateChanged: () => () => {},
@@ -157,22 +185,20 @@ function ReadingView({ devotional, selectedDate, dateScope, settings, appState, 
   const adjacent = (direction) => {
     const next = new Date(`${selectedDate}T12:00:00`);
     next.setDate(next.getDate() + direction);
-    const nextKey = isoDate(next);
-    const todayKey = isoDate();
-    if (dateScope === "today") return;
-    if (dateScope === "past" && nextKey > todayKey) return;
-    if (dateScope === "future" && nextKey <= todayKey) return;
+    if (!isAdjacentReadingAvailable(dateScope, next)) return;
     onSelectDate(next);
   };
-  const previousKey = isoDate(new Date(new Date(`${selectedDate}T12:00:00`).setDate(new Date(`${selectedDate}T12:00:00`).getDate() - 1)));
-  const nextKey = isoDate(new Date(new Date(`${selectedDate}T12:00:00`).setDate(new Date(`${selectedDate}T12:00:00`).getDate() + 1)));
-  const todayKey = isoDate();
-  const canGoPrevious = dateScope === "past" ? true : dateScope === "future" && previousKey > todayKey;
-  const canGoNext = dateScope === "future" ? true : dateScope === "past" && nextKey <= todayKey;
+  const selectedCalendarDate = new Date(`${selectedDate}T12:00:00`);
+  const previousDate = new Date(selectedCalendarDate);
+  const nextDate = new Date(selectedCalendarDate);
+  previousDate.setDate(previousDate.getDate() - 1);
+  nextDate.setDate(nextDate.getDate() + 1);
+  const canGoPrevious = isAdjacentReadingAvailable(dateScope, previousDate);
+  const canGoNext = isAdjacentReadingAvailable(dateScope, nextDate);
 
   return <div className="reader-layout">
     <aside className="reader-aside">
-      <button title="Return to the previous card or calendar view" className="back-link" onClick={onBack}><ArrowLeft size={16} /> Verse card</button>
+      <button title="Return to the compact Verse Card" className="back-link" onClick={onBack}><ArrowLeft size={16} /> Verse card</button>
       <div className="today-label">{new Date(`${selectedDate}T12:00:00`).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</div>
       <h1>{devotional.title.replace(/\s·\s\d+$/, "")}</h1>
       <div className="aside-verse">“{devotional.verse}”<strong>{devotional.reference}</strong></div>
@@ -204,18 +230,18 @@ function ReadingView({ devotional, selectedDate, dateScope, settings, appState, 
 }
 
 function CalendarView({ catalogue, appState, mode, onSelectDate }) {
-  const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [month, setMonth] = useState(() => calendarStartMonth(mode));
   const firstOffset = month.getDay();
   const lastDayOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const cells = [...Array(firstOffset).fill(null), ...Array.from({ length: lastDayOfMonth }, (_, index) => index + 1)];
   const today = new Date();
   today.setHours(12, 0, 0, 0);
-  const currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const boundaryMonth = calendarStartMonth(mode, today);
   const isHistory = mode === "history";
-  const canGoPreviousMonth = isHistory || month > currentMonth;
-  const canGoNextMonth = !isHistory || month < currentMonth;
+  const canGoPreviousMonth = isHistory || month > boundaryMonth;
+  const canGoNextMonth = !isHistory || month < boundaryMonth;
   return <section className="panel-view calendar-view">
-    <div className="panel-heading calendar-heading"><div><span>{isHistory ? "Your journey" : "What lies ahead"}</span><h1>{isHistory ? "Reading history" : "Future devotionals"}</h1><p>{isHistory ? `${calculateStreak(appState.completions)}-day current streak · ${Object.keys(appState.completions).length} readings completed` : "Choose an upcoming date to read its devotional."}</p></div>
+    <div className="panel-heading calendar-heading"><div><span>{isHistory ? "Your journey" : "What lies ahead"}</span><h1>{isHistory ? "Reading history" : "Future devotionals"}</h1><p>{isHistory ? `${calculateStreak(appState.completions)}-day current streak · ${Object.keys(appState.completions).length} readings completed` : "Choose today or an upcoming date to read its devotional."}</p></div>
       <div className="month-nav"><button title="Show the previous available month" disabled={!canGoPreviousMonth} aria-label="Previous month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft /></button><strong>{month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</strong><button title="Show the next available month" disabled={!canGoNextMonth} aria-label="Next month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><ChevronRight /></button></div>
     </div>
     <div className="calendar-grid">{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day) => <div className="weekday" key={day}>{day}</div>)}
@@ -224,9 +250,10 @@ function CalendarView({ catalogue, appState, mode, onSelectDate }) {
         const date = new Date(month.getFullYear(), month.getMonth(), day, 12);
         const item = devotionalForDate(catalogue, date);
         const key = isoDate(date);
-        const available = isHistory ? date.getTime() <= today.getTime() : date.getTime() > today.getTime();
+        const available = isCalendarDateAvailable(mode, date, today);
         if (!available) return <div className="unavailable-day" key={key}><span>{day}</span></div>;
-        return <button title={`Open the ${date.toLocaleDateString()} devotional`} aria-label={`Open devotional for ${date.toLocaleDateString()}`} key={key} className={`${appState.completions[key] ? "completed-day" : ""}`} onClick={() => onSelectDate(date)}>
+        const classes = [appState.completions[key] ? "completed-day" : "", key === isoDate(today) ? "current-day" : ""].filter(Boolean).join(" ");
+        return <button title={`Open the ${date.toLocaleDateString()} devotional`} aria-label={`Open devotional for ${date.toLocaleDateString()}`} key={key} className={classes} onClick={() => onSelectDate(date)}>
           <span>{day}</span><small>{item.theme}</small>{appState.favourites.includes(item.id) && <Heart size={12} fill="currentColor" />}{appState.completions[key] && <Check size={13} />}
         </button>;
       })}
@@ -348,6 +375,16 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
     onSelectDate(new Date());
     setView("today");
   };
+  const showFuture = () => {
+    onSelectDate(new Date());
+    setView("future");
+  };
+  const showHistory = () => {
+    const previousDate = new Date();
+    previousDate.setDate(previousDate.getDate() - 1);
+    onSelectDate(previousDate);
+    setView("history");
+  };
   const toggleFavourite = () => onPatchState({ favourites: favourite ? appState.favourites.filter((id) => id !== devotional.id) : [...appState.favourites, devotional.id] });
   const toggleComplete = () => {
     const completions = { ...appState.completions };
@@ -360,16 +397,16 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
       <button title="Return to the compact Verse Card" className="wordmark" onClick={onBack}><span>WORK DAY</span><em>with God</em></button>
       <nav>
         <button title="Open the devotional assigned to today’s local date" className={view === "today" ? "selected" : ""} onClick={showToday}><BookOpen size={16} /> Today</button>
-        {!settings.preventFutureDevotionals && <button title="Browse devotionals assigned to dates after today" className={view === "future" || view === "future-reading" ? "selected" : ""} onClick={() => setView("future")}><CalendarDays size={16} /> Future Devotionals</button>}
-        <button title="Browse devotional dates before today and review reading activity" className={view === "history" || view === "history-reading" ? "selected" : ""} onClick={() => setView("history")}><History size={16} /> History</button>
+        {!settings.preventFutureDevotionals && <button title="Browse devotionals assigned to today and later dates" className={view === "future" || view === "future-reading" ? "selected" : ""} onClick={showFuture}><CalendarDays size={16} /> Future Devotionals</button>}
+        <button title="Browse devotional dates before today and review reading activity" className={view === "history" || view === "history-reading" ? "selected" : ""} onClick={showHistory}><History size={16} /> History</button>
         <button title="Configure reminders, appearance, reading behavior, and local data" className={view === "settings" ? "selected" : ""} onClick={() => setView("settings")}><Settings size={16} /> Settings</button>
       </nav><WindowControls />
     </header>
     {view === "today" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="today" settings={settings} appState={appState} onBack={onBack} onSettings={() => setView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
-    {view === "history" && <CalendarView catalogue={catalogue} appState={appState} mode="history" onSelectDate={(date) => { onSelectDate(date); setView("history-reading"); }} />}
-    {view === "history-reading" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="past" settings={settings} appState={appState} onBack={() => setView("history")} onSettings={() => setView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
-    {view === "future" && !settings.preventFutureDevotionals && <CalendarView catalogue={catalogue} appState={appState} mode="future" onSelectDate={(date) => { onSelectDate(date); setView("future-reading"); }} />}
-    {view === "future-reading" && !settings.preventFutureDevotionals && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="future" settings={settings} appState={appState} onBack={() => setView("future")} onSettings={() => setView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
+    {view === "history" && <CalendarView key="history" catalogue={catalogue} appState={appState} mode="history" onSelectDate={(date) => { onSelectDate(date); setView("history-reading"); }} />}
+    {view === "history-reading" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="past" settings={settings} appState={appState} onBack={onBack} onSettings={() => setView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
+    {view === "future" && !settings.preventFutureDevotionals && <CalendarView key="future" catalogue={catalogue} appState={appState} mode="future" onSelectDate={(date) => { onSelectDate(date); setView("future-reading"); }} />}
+    {view === "future-reading" && !settings.preventFutureDevotionals && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="future" settings={settings} appState={appState} onBack={onBack} onSettings={() => setView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
     {view === "settings" && <SettingsView settings={settings} appState={appState} onBack={onBack} onPatchSettings={onPatchSettings} onSnooze={onSnooze} onPatchState={onPatchState} />}
   </main>;
 }
@@ -381,6 +418,7 @@ export default function App() {
   const [readerView, setReaderView] = useState("today");
   const [selectedDate, setSelectedDate] = useState(() => isoDate());
   const [startupError, setStartupError] = useState("");
+  const stateRevision = useRef(0);
   const selectedCalendarDate = useMemo(() => new Date(`${selectedDate}T12:00:00`), [selectedDate]);
   const devotional = catalogue.length ? devotionalForDate(catalogue, selectedCalendarDate) : null;
 
@@ -409,7 +447,10 @@ export default function App() {
       const year = new Date().getFullYear();
       setSelectedDate(`${year}-${id}`); setReaderView("today"); setMode("reader"); desktop.setMode("reader");
     });
-    const removeState = desktop.onStateChanged(setAppState);
+    const removeState = desktop.onStateChanged((state) => {
+      stateRevision.current += 1;
+      setAppState(state);
+    });
     return () => { active = false; removeNavigate(); removeDate(); removeState(); };
   }, []);
 
@@ -425,7 +466,22 @@ export default function App() {
   const openReader = (view = "today") => { setReaderView(view); setMode("reader"); desktop.setMode("reader"); };
   const closeReader = () => { setSelectedDate(isoDate()); setMode("card"); desktop.setMode("card"); };
   const patchSettings = async (patch) => setAppState(await desktop.updateSettings(patch));
-  const patchState = async (patch, replace = false) => setAppState(replace ? patch : await desktop.updateState(patch));
+  const patchState = async (patch, replace = false) => {
+    const revision = ++stateRevision.current;
+    if (replace) {
+      setAppState(patch);
+      return patch;
+    }
+    setAppState((current) => ({ ...current, ...patch }));
+    try {
+      const persisted = await desktop.updateState(patch);
+      if (revision === stateRevision.current) setAppState(persisted);
+      return persisted;
+    } catch (error) {
+      if (revision === stateRevision.current) setAppState(await desktop.getState());
+      throw error;
+    }
+  };
   const onSnooze = async (until) => { await desktop.snooze(until); setAppState(await desktop.getState()); };
   const onRemindLater = async () => {
     const until = Date.now() + appState.settings.remindLaterMinutes * 60 * 1000;
