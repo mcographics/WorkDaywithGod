@@ -254,7 +254,20 @@ blockquote { width: 100%; margin: 18px 0 11px; font-family: Georgia, serif; font
 .photo-layer.no-transition { transition: none; }
 .action-row { padding: 12px 20px; border-top: 1px solid rgba(50,50,42,.08); display:flex; gap:8px; flex-wrap:wrap; }
 .action-row button { border:1px solid color-mix(in srgb,var(--accent) 35%,transparent); border-radius:8px; background:color-mix(in srgb,var(--accent) 8%,transparent); color:var(--accent); padding:8px 11px; font-size:9px; cursor:pointer; }
+.action-row button:disabled { opacity:.48; cursor:wait; }
+.action-row button svg { vertical-align:-2px; margin-right:5px; }
 .action-row.danger button { color:#a34f4f; border-color:rgba(163,79,79,.3); }
+.update-status-card { border-top:1px solid var(--line); padding:15px 20px; display:flex; align-items:flex-start; gap:11px; color:var(--muted-text); }
+.update-status-card > svg { flex:0 0 auto; margin-top:2px; color:var(--accent); }
+.update-status-card > svg.checking { animation:update-spin 1s linear infinite; }
+.surface-no-motion .update-status-card > svg.checking { animation:none; }
+.update-status-card > span { min-width:0; display:flex; flex-direction:column; gap:4px; }
+.update-status-card strong { color:var(--text); font-size:12px; }
+.update-status-card small { color:var(--muted-text); font-size:10px; line-height:1.4; }
+.update-status-card em { color:#a45b48; font-size:9px; line-height:1.4; font-style:normal; }
+.update-status-card.available { background:color-mix(in srgb,var(--accent) 7%,transparent); }
+.update-status-card.available strong { color:var(--accent); }
+@keyframes update-spin { to { transform:rotate(360deg); } }
 .about-row { padding:18px 20px; display:flex; justify-content:space-between; color:#77736b; font-size:10px; }
 .settings-message { position:sticky; bottom:8px; padding:11px 14px; border-radius:9px; background:var(--deep); color:white; font-size:10px; box-shadow:0 8px 25px rgba(0,0,0,.18); }
 .about-settings { padding: 20px; display: grid; gap: 18px; }

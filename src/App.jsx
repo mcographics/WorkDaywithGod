@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import {
   ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight,
-  Clock3, Heart, History, Info, MessageCircle, Minus, Pause, Play, RotateCcw, Settings, SlidersHorizontal, UserRound, X,
+  Clock3, ExternalLink, Heart, History, Info, MessageCircle, Minus, Pause, Play, RefreshCw, RotateCcw, Settings, SlidersHorizontal, UserRound, X,
 } from "lucide-react";
 import { calendarStartMonth, isAdjacentReadingAvailable, isCalendarDateAvailable } from "./calendar.mjs";
 import { calculateStreak, dateId, devotionalForDate, isoDate, loadCatalogue } from "./catalogue";
@@ -42,7 +42,7 @@ const defaultSettings = {
   autoScrollEnabled: true, autoScrollSpeed: 2, hoverPausesScroll: true,
   rememberReadingPosition: true, showReflectionPrompt: true, showPrayer: true, showAttribution: true,
   automaticDailyContent: true, automaticDailyImage: true, preventFutureDevotionals: false, showStreak: true,
-  translation: "KJV",
+  translation: "KJV", updateCheckFrequency: "weekly",
 };
 const intervalMinuteOptions = Array.from({ length: 120 }, (_, index) => index + 1);
 const remindLaterOptions = Array.from({ length: 9 }, (_, index) => (index + 1) * 10);
@@ -86,8 +86,11 @@ const desktop = window.desktop || {
     return browserStateSnapshot();
   },
   getAppInfo: async () => ({ version: "1.0.0", notificationSupported: false }),
+  getUpdateStatus: async () => ({ currentVersion: "1.0.0", latestVersion: "", updateAvailable: false, lastCheckedAt: 0, nextCheckAt: 0, frequency: browserState.settings.updateCheckFrequency, checking: false, error: "", supported: false }),
+  checkForUpdates: async () => { throw new Error("Update checks are available in the Windows desktop app."); },
+  openUpdateRelease: async () => false,
   openSupportDiscord: async () => { window.open("https://discord.gg/2UvdpY4JSW", "_blank", "noopener,noreferrer"); },
-  onNavigate: () => () => {}, onOpenDate: () => () => {}, onStateChanged: () => () => {},
+  onNavigate: () => () => {}, onOpenDate: () => () => {}, onStateChanged: () => () => {}, onUpdateStatus: () => () => {},
 };
 
 function WindowControls() {
@@ -302,7 +305,15 @@ function Toggle({ checked, onChange, label, description }) {
 function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, onPatchState }) {
   const [message, setMessage] = useState("");
   const [appInfo, setAppInfo] = useState(null);
-  useEffect(() => { desktop.getAppInfo().then(setAppInfo); }, []);
+  const [updateStatus, setUpdateStatus] = useState(null);
+  const [checkingForUpdates, setCheckingForUpdates] = useState(false);
+  useEffect(() => {
+    let active = true;
+    desktop.getAppInfo().then((info) => active && setAppInfo(info));
+    desktop.getUpdateStatus().then((status) => active && setUpdateStatus(status));
+    const removeUpdateStatus = desktop.onUpdateStatus((status) => active && setUpdateStatus(status));
+    return () => { active = false; removeUpdateStatus(); };
+  }, []);
   const run = async (action, success) => {
     try {
       const result = await action();
@@ -313,7 +324,30 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
   const updateQuiet = (patch) => onPatchSettings({ quietHours: { ...settings.quietHours, ...patch } });
   const toggleDay = (day) => onPatchSettings({ activeDays: settings.activeDays.includes(day) ? settings.activeDays.filter((value) => value !== day) : [...settings.activeDays, day].sort() });
   const updateTime = (index, value) => onPatchSettings({ reminderTimes: settings.reminderTimes.map((time, itemIndex) => itemIndex === index ? value : time).sort() });
+  const updateFrequency = async (frequency) => {
+    try {
+      await onPatchSettings({ updateCheckFrequency: frequency });
+      setUpdateStatus(await desktop.getUpdateStatus());
+      setMessage(frequency === "never" ? "Automatic update checks turned off. You can still use Check now." : `Update checks will run ${frequency}.`);
+    } catch (error) { setMessage(error.message); }
+  };
+  const checkNow = async () => {
+    setCheckingForUpdates(true);
+    setMessage("");
+    try {
+      const status = await desktop.checkForUpdates();
+      setUpdateStatus(status);
+      setMessage(status.updateAvailable ? `Version ${status.latestVersion} is available on GitHub.` : `You’re up to date with version ${status.currentVersion}.`);
+    } catch (error) { setMessage(error.message); }
+    finally { setCheckingForUpdates(false); }
+  };
   const paused = appState.snoozeUntil > Date.now();
+  const lastUpdateCheck = updateStatus?.lastCheckedAt ? new Date(updateStatus.lastCheckedAt).toLocaleString() : "Not checked yet";
+  const nextUpdateCheck = settings.updateCheckFrequency === "never"
+    ? "Automatic checks are off"
+    : updateStatus?.nextCheckAt
+      ? new Date(updateStatus.nextCheckAt).toLocaleString()
+      : `Checks will run ${settings.updateCheckFrequency}`;
   const readingOptions = [
     ["focusMode", "Image-free focus mode", "Hide scenic backgrounds for a distraction-free reading view."],
     ["reducedMotion", "Reduced motion", "Disable transitions and animated scrolling for greater visual comfort."],
@@ -373,6 +407,14 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
         <div className="action-row"><button title="Delete completion dates, streak information, and saved reading positions" onClick={() => run(async () => ({ state: await desktop.resetHistory() }), "Reading history cleared.")}>Clear reading history</button><button title="Remove every devotional saved as a favourite" onClick={() => run(async () => ({ state: await desktop.resetFavourites() }), "Favourites cleared.")}>Clear favourites</button></div>
         <div className="action-row"><button title="Open the Windows folder containing this app’s local settings and reading data" onClick={() => run(() => desktop.openDataFolder(), "Local data folder opened.")}>Open data folder</button><button title="Save settings, favourites, and reading history to a portable JSON backup" onClick={() => run(() => desktop.exportData(), "Backup exported.")}>Export backup</button><button title="Restore settings and reading data from a previously exported JSON backup" onClick={() => run(() => desktop.importData(), "Backup imported.")}>Import backup</button></div>
         <div className="action-row danger"><button title="Restore every setting to default and erase all local reading history and favourites" onClick={() => window.confirm("Reset all Work Day with God settings and history?") && run(async () => ({ state: await desktop.resetAll() }), "Application reset.")}>Reset entire application</button></div>
+      </div>
+      <div className="settings-group"><h2>Updates</h2>
+        <label title="Choose how often Work Day with God checks GitHub for a newer public release" className="field-label"><span><strong>Check for updates</strong><small>Uses GitHub’s public release information. No account, sign-in, or background service is required.</small></span><select aria-label="Automatic update check frequency" value={settings.updateCheckFrequency} onChange={(event) => updateFrequency(event.target.value)}><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="never">Never</option></select></label>
+        <div className={`update-status-card ${updateStatus?.updateAvailable ? "available" : ""}`} role="status">
+          <RefreshCw size={19} className={checkingForUpdates || updateStatus?.checking ? "checking" : ""} />
+          <span><strong>{checkingForUpdates || updateStatus?.checking ? "Checking GitHub…" : updateStatus?.updateAvailable ? `Version ${updateStatus.latestVersion} is available` : updateStatus?.error ? "The last check could not be completed" : "Your update status"}</strong><small>Installed: {updateStatus?.currentVersion || appInfo?.version || "unknown"} · Last checked: {lastUpdateCheck}</small><small>{nextUpdateCheck}</small>{updateStatus?.error && <em>{updateStatus.error}</em>}</span>
+        </div>
+        <div className="action-row"><button disabled={checkingForUpdates || updateStatus?.checking} title="Check GitHub now for the latest public Work Day with God release" onClick={checkNow}>{checkingForUpdates || updateStatus?.checking ? "Checking…" : "Check now"}</button>{updateStatus?.updateAvailable && <button title={`Open the Work Day with God ${updateStatus.latestVersion} release on GitHub`} onClick={() => run(() => desktop.openUpdateRelease(), "Opened the latest release on GitHub.")}><ExternalLink size={12} />View update on GitHub</button>}</div>
       </div>
       <div className="settings-group"><h2>About</h2>
         <div className="about-settings">

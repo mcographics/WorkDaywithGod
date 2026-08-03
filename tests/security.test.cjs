@@ -6,6 +6,7 @@ const path = require("node:path");
 const root = path.join(__dirname, "..");
 const mainSource = fs.readFileSync(path.join(root, "electron", "main.cjs"), "utf8");
 const preloadSource = fs.readFileSync(path.join(root, "electron", "preload.cjs"), "utf8");
+const updateCheckerSource = fs.readFileSync(path.join(root, "electron", "update-checker.cjs"), "utf8");
 const indexSource = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
@@ -28,6 +29,19 @@ test("navigation, permissions, and IPC senders are restricted", () => {
   assert.match(mainSource, /setPermissionCheckHandler/);
   assert.match(mainSource, /assertTrustedIpcSender/);
   assert.doesNotMatch(preloadSource, /require\(["'](?:child_process|fs|net|http|https)["']\)/);
+});
+
+test("update checks keep networking and release navigation in the trusted main process", () => {
+  assert.match(updateCheckerSource, /https:\/\/api\.github\.com\/repos\/mcographics\/WorkDaywithGod\/releases\/latest/);
+  assert.match(updateCheckerSource, /redirect: "error"/);
+  assert.match(updateCheckerSource, /MAX_RESPONSE_BYTES/);
+  assert.match(mainSource, /fetchLatestRelease\(\{ fetchImpl: net\.fetch/);
+  assert.match(mainSource, /handleTrusted\("updates:check"/);
+  assert.match(mainSource, /handleTrusted\("updates:open-release"/);
+  assert.match(mainSource, /shell\.openExternal\(status\.releaseUrl\)/);
+  assert.match(preloadSource, /checkForUpdates: \(\) => ipcRenderer\.invoke\("updates:check"\)/);
+  assert.match(preloadSource, /openUpdateRelease: \(\) => ipcRenderer\.invoke\("updates:open-release"\)/);
+  assert.doesNotMatch(preloadSource, /api\.github\.com|releases\/tag/);
 });
 
 test("development startup uses a dedicated strict Vite port", () => {

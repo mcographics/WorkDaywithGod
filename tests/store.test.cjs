@@ -9,10 +9,12 @@ test("store creates defaults and persists validated settings", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "wdwg-store-"));
   const store = new AppStore(directory);
   assert.equal(store.get().settings.launchAtLogin, true);
-  store.patchSettings({ intervalMinutes: 2, reminderTimes: ["09:00", "bad"] });
+  assert.equal(store.get().settings.updateCheckFrequency, "weekly");
+  store.patchSettings({ intervalMinutes: 2, reminderTimes: ["09:00", "bad"], updateCheckFrequency: "daily" });
   const reloaded = new AppStore(directory).get();
   assert.equal(reloaded.settings.intervalMinutes, 2);
   assert.deepEqual(reloaded.settings.reminderTimes, ["09:00"]);
+  assert.equal(reloaded.settings.updateCheckFrequency, "daily");
   fs.rmSync(directory, { recursive: true, force: true });
 });
 
@@ -20,7 +22,7 @@ test("malformed state recovers to defaults", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "wdwg-store-"));
   fs.writeFileSync(path.join(directory, "work-day-with-god.json"), "{broken", "utf8");
   const store = new AppStore(directory);
-  assert.equal(store.get().version, 1);
+  assert.equal(store.get().version, 2);
   assert.equal(store.get().settings.theme, "gold");
   fs.rmSync(directory, { recursive: true, force: true });
 });
@@ -57,6 +59,33 @@ test("reminder minute ranges and ten-minute remind-later increments are normaliz
   assert.equal(store.patchSettings({ remindLaterMinutes: 9 }).settings.remindLaterMinutes, 10);
   assert.equal(store.patchSettings({ remindLaterMinutes: 67 }).settings.remindLaterMinutes, 70);
   assert.equal(store.patchSettings({ remindLaterMinutes: 999 }).settings.remindLaterMinutes, 90);
+  fs.rmSync(directory, { recursive: true, force: true });
+});
+
+test("update preferences and release metadata are normalized before persistence", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "wdwg-store-"));
+  const store = new AppStore(directory);
+  assert.equal(store.patchSettings({ updateCheckFrequency: "monthly" }).settings.updateCheckFrequency, "monthly");
+  assert.equal(store.patchSettings({ updateCheckFrequency: "hourly" }).settings.updateCheckFrequency, "weekly");
+  const checkedAt = Date.now() - 1000;
+  const state = store.patchState({
+    updateLastCheckedAt: checkedAt,
+    updateLatestTag: "v1.4.2",
+    updateNotifiedTag: "../../unsafe",
+  });
+  assert.equal(state.updateLastCheckedAt, checkedAt);
+  assert.equal(state.updateLatestTag, "v1.4.2");
+  assert.equal(state.updateNotifiedTag, "");
+  const imported = store.replace({
+    updateLastCheckedAt: Date.now() + 24 * 60 * 60 * 1000,
+    updateLatestTag: "https://example.com/release",
+    updateNotifiedTag: "v2.0.0",
+    settings: { updateCheckFrequency: "never" },
+  });
+  assert.equal(imported.updateLastCheckedAt, 0);
+  assert.equal(imported.updateLatestTag, "");
+  assert.equal(imported.updateNotifiedTag, "v2.0.0");
+  assert.equal(imported.settings.updateCheckFrequency, "never");
   fs.rmSync(directory, { recursive: true, force: true });
 });
 

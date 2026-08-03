@@ -1,8 +1,9 @@
-const { app, BrowserWindow, ipcMain, screen, Tray, Menu, Notification, nativeImage, shell, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, screen, Tray, Menu, Notification, nativeImage, shell, dialog, net } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { AppStore } = require("./store.cjs");
 const { ReminderScheduler } = require("./scheduler.cjs");
+const { compareVersions, fetchLatestRelease, isCheckDue, nextCheckAt, normalizeReleaseTag, releaseUrlForTag } = require("./update-checker.cjs");
 
 const APP_ID = "com.mcographics.workdaywithgod.desktop";
 const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
@@ -12,6 +13,11 @@ let mainWindow;
 let tray;
 let store;
 let scheduler;
+let updateCheckInFlight;
+let updateStartupTimer;
+let updateEvaluationTimer;
+let updateLastAttemptAt = 0;
+let updateLastError = "";
 let isQuitting = false;
 let devotionalCatalogue = [];
 
@@ -184,6 +190,88 @@ function notify(date) {
   notification.show();
 }
 
+function updateStatus() {
+  const state = store.get();
+  const currentVersion = app.getVersion();
+  const latestTag = normalizeReleaseTag(state.updateLatestTag);
+  let updateAvailable = false;
+  if (latestTag) {
+    try { updateAvailable = compareVersions(latestTag, currentVersion) > 0; } catch {}
+  }
+  return {
+    currentVersion,
+    latestTag,
+    latestVersion: latestTag.replace(/^v/i, ""),
+    updateAvailable,
+    releaseUrl: releaseUrlForTag(latestTag),
+    lastCheckedAt: state.updateLastCheckedAt,
+    nextCheckAt: nextCheckAt(state.settings.updateCheckFrequency, state.updateLastCheckedAt),
+    frequency: state.settings.updateCheckFrequency,
+    checking: Boolean(updateCheckInFlight),
+    error: updateLastError,
+  };
+}
+
+function sendUpdateStatus() {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("updates:status", updateStatus());
+}
+
+function notifyUpdateAvailable(status) {
+  if (!app.isPackaged || !Notification.isSupported()) return;
+  const notification = new Notification({
+    title: "Work Day with God update available",
+    body: `Version ${status.latestVersion} is ready to download from GitHub.`,
+    icon: applicationIcon(),
+    silent: true,
+  });
+  notification.on("click", () => shell.openExternal(status.releaseUrl));
+  notification.show();
+}
+
+async function checkForUpdates({ manual = false } = {}) {
+  const before = store.get();
+  if (!manual && !isCheckDue(before.settings.updateCheckFrequency, before.updateLastCheckedAt)) return updateStatus();
+  if (!manual && Date.now() - updateLastAttemptAt < 15 * 60 * 1000) return updateStatus();
+  if (updateCheckInFlight) return updateCheckInFlight;
+  updateLastAttemptAt = Date.now();
+  const operation = (async () => {
+    try {
+      const result = await fetchLatestRelease({ fetchImpl: net.fetch, currentVersion: app.getVersion() });
+      const shouldNotify = result.updateAvailable && before.updateNotifiedTag !== result.latestTag;
+      store.patchState({
+        updateLastCheckedAt: result.checkedAt,
+        updateLatestTag: result.latestTag,
+        updateNotifiedTag: shouldNotify ? result.latestTag : before.updateNotifiedTag,
+      });
+      const status = updateStatus();
+      if (shouldNotify) notifyUpdateAvailable(status);
+      return { ...status, checking: false };
+    } catch (error) {
+      updateLastError = error?.message || "Unable to check GitHub for updates.";
+      throw new Error(updateLastError);
+    } finally {
+      if (updateCheckInFlight === operation) updateCheckInFlight = null;
+      sendUpdateStatus();
+    }
+  })();
+  updateCheckInFlight = operation;
+  updateLastError = "";
+  sendUpdateStatus();
+  return operation;
+}
+
+function runScheduledUpdateCheck() {
+  checkForUpdates().catch(() => {});
+}
+
+function startUpdateChecks() {
+  if (!app.isPackaged) return;
+  updateStartupTimer = setTimeout(runScheduledUpdateCheck, 8_000);
+  updateStartupTimer.unref?.();
+  updateEvaluationTimer = setInterval(runScheduledUpdateCheck, 60 * 60 * 1000);
+  updateEvaluationTimer.unref?.();
+}
+
 function applyLoginSetting(enabled) {
   if (!app.isPackaged || process.env.WDWG_DISABLE_LOGIN_REGISTRATION === "1") return;
   app.setLoginItemSettings({
@@ -223,6 +311,7 @@ function registerIpc() {
       state = store.patchState({ remindAt: 0, snoozeUntil: 0 });
     }
     if (Object.prototype.hasOwnProperty.call(patch, "launchAtLogin")) applyLoginSetting(state.settings.launchAtLogin);
+    if (Object.prototype.hasOwnProperty.call(patch, "updateCheckFrequency")) setTimeout(runScheduledUpdateCheck, 0);
     rebuildTray();
     return { ...state, scheduler: scheduler.status() };
   });
@@ -300,6 +389,13 @@ function registerIpc() {
     notificationSupported: Notification.isSupported(),
     userDataPath: app.getPath("userData"),
   }));
+  handleTrusted("updates:get-status", () => updateStatus());
+  handleTrusted("updates:check", () => checkForUpdates({ manual: true }));
+  handleTrusted("updates:open-release", () => {
+    const status = updateStatus();
+    if (!status.updateAvailable || !status.releaseUrl) throw new Error("No newer release is available.");
+    return shell.openExternal(status.releaseUrl);
+  });
   handleTrusted("support:discord", () => shell.openExternal("https://discord.gg/2UvdpY4JSW"));
   onTrusted("window:minimize", () => mainWindow?.minimize());
   onTrusted("window:close", () => mainWindow?.close());
@@ -326,6 +422,7 @@ app.whenReady().then(() => {
   scheduler = new ReminderScheduler({ store, notify });
   scheduler.start();
   createTray();
+  startUpdateChecks();
   applyLoginSetting(store.get().settings.launchAtLogin);
   screen.on("display-metrics-changed", () => {
     if (mainWindow && mainWindow.isVisible()) placeBottomRight(mainWindow, mainWindow.isResizable() ? readerSize : compactSize);
@@ -341,5 +438,7 @@ app.whenReady().then(() => {
 app.on("before-quit", () => {
   isQuitting = true;
   scheduler?.stop();
+  clearTimeout(updateStartupTimer);
+  clearInterval(updateEvaluationTimer);
 });
 app.on("window-all-closed", () => {});

@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const STORE_VERSION = 1;
+const STORE_VERSION = 2;
 const BOOLEAN_SETTINGS = [
   "launchAtLogin", "showStartupCard", "startInTray", "notificationsEnabled", "notificationSound",
   "imageTransition", "focusMode", "reducedMotion", "autoScrollEnabled", "hoverPausesScroll",
@@ -13,6 +13,7 @@ const TRANSLATIONS = ["KJV", "ASV", "DBT", "DRB", "ERV", "JPS", "WBT", "YLT", "G
 const validClock = (value) => typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 const validDevotionalId = (value) => typeof value === "string" && /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(value);
 const validHistoryDate = (value) => typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(value);
+const validReleaseTag = (value) => typeof value === "string" && value.length <= 80 && /^v?\d+\.\d+\.\d+(?:-?[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$/.test(value);
 const DEFAULT_SETTINGS = Object.freeze({
   launchAtLogin: true,
   closeToTray: true,
@@ -46,6 +47,7 @@ const DEFAULT_SETTINGS = Object.freeze({
   preventFutureDevotionals: false,
   showStreak: true,
   translation: "KJV",
+  updateCheckFrequency: "weekly",
 });
 
 function clone(value) {
@@ -58,6 +60,9 @@ function normalizeSettings(input = {}) {
   next.theme = THEMES.includes(next.theme) ? next.theme : DEFAULT_SETTINGS.theme;
   next.colorMode = ["system", "auto", "light", "dark"].includes(next.colorMode) ? next.colorMode : DEFAULT_SETTINGS.colorMode;
   next.translation = TRANSLATIONS.includes(next.translation) ? next.translation : DEFAULT_SETTINGS.translation;
+  next.updateCheckFrequency = ["daily", "weekly", "monthly", "never"].includes(next.updateCheckFrequency)
+    ? next.updateCheckFrequency
+    : DEFAULT_SETTINGS.updateCheckFrequency;
   next.reminderMode = ["times", "interval"].includes(next.reminderMode) ? next.reminderMode : "times";
   next.reminderTimes = Array.isArray(next.reminderTimes)
     ? [...new Set(next.reminderTimes.filter(validClock))].sort()
@@ -82,6 +87,7 @@ function normalizeSettings(input = {}) {
 }
 
 function normalizeState(input = {}) {
+  const updateLastCheckedAt = Number(input.updateLastCheckedAt);
   const completions = {};
   if (input.completions && typeof input.completions === "object" && !Array.isArray(input.completions)) {
     for (const [date, timestamp] of Object.entries(input.completions)) {
@@ -105,6 +111,11 @@ function normalizeState(input = {}) {
     snoozeUntil: Number(input.snoozeUntil) || 0,
     remindAt: Number(input.remindAt) || 0,
     lastNotificationKey: typeof input.lastNotificationKey === "string" ? input.lastNotificationKey : "",
+    updateLastCheckedAt: Number.isFinite(updateLastCheckedAt) && updateLastCheckedAt > 0 && updateLastCheckedAt <= Date.now() + 5 * 60 * 1000
+      ? updateLastCheckedAt
+      : 0,
+    updateLatestTag: validReleaseTag(input.updateLatestTag) ? input.updateLatestTag : "",
+    updateNotifiedTag: validReleaseTag(input.updateNotifiedTag) ? input.updateNotifiedTag : "",
     migrationComplete: Boolean(input.migrationComplete),
   };
 }

@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld("desktop", Object.freeze({
   resetFavourites: () => ipcRenderer.invoke("data:reset-favourites"),
   resetAll: () => ipcRenderer.invoke("data:reset-all"),
   getAppInfo: () => ipcRenderer.invoke("app:info"),
+  getUpdateStatus: () => ipcRenderer.invoke("updates:get-status"),
+  checkForUpdates: () => ipcRenderer.invoke("updates:check"),
+  openUpdateRelease: () => ipcRenderer.invoke("updates:open-release"),
   openSupportDiscord: () => ipcRenderer.invoke("support:discord"),
   onNavigate: (callback) => {
     const handler = (_event, view) => callback(view);
@@ -33,5 +36,10 @@ contextBridge.exposeInMainWorld("desktop", Object.freeze({
     const handler = (_event, state) => callback(state);
     ipcRenderer.on("app:state-changed", handler);
     return () => ipcRenderer.removeListener("app:state-changed", handler);
+  },
+  onUpdateStatus: (callback) => {
+    const handler = (_event, status) => callback(status);
+    ipcRenderer.on("updates:status", handler);
+    return () => ipcRenderer.removeListener("updates:status", handler);
   },
 }));

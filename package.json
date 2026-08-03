@@ -1,6 +1,6 @@
 {
   "name": "work-day-with-god",
-  "version": "1.4.1-a",
+  "version": "1.4.2",
   "private": true,
   "author": "Work Day with God",
   "description": "An ambient desktop devotional companion.",
@@ -57,7 +57,7 @@
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico",
-      "artifactName": "Work-Day-with-God-Setup-1.4.1a.${ext}"
+      "artifactName": "Work-Day-with-God-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
