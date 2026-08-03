@@ -57,8 +57,11 @@ test("development startup uses a dedicated strict Vite port", () => {
 
 test("Windows taskbar identity uses the multi-resolution application icon", () => {
   assert.match(mainSource, /process\.platform === "win32" \? path\.join\("build", "icon\.ico"\)/);
-  assert.match(mainSource, /const APP_ID = "com\.mcographics\.workdaywithgod\.desktop"/);
-  assert.equal(packageJson.build.appId, "com.mcographics.workdaywithgod.desktop");
+  assert.match(mainSource, /const PACKAGED_APP_ID = "com\.mcographics\.workdaywithgod\.windows"/);
+  assert.match(mainSource, /const DEVELOPMENT_APP_ID = "com\.mcographics\.workdaywithgod\.development"/);
+  assert.match(mainSource, /const APP_ID = app\.isPackaged \? PACKAGED_APP_ID : DEVELOPMENT_APP_ID/);
+  assert.equal(packageJson.build.appId, "com.mcographics.workdaywithgod.windows");
+  assert.notEqual(packageJson.build.appId, "com.mcographics.workdaywithgod.development");
   assert.deepEqual(packageJson.build.extraResources, [{ from: "build/icon.ico", to: "icon.ico" }]);
   assert.match(mainSource, /return app\.isPackaged \? path\.join\(process\.resourcesPath, "icon\.ico"\) : sourceIconPath\(\)/);
   assert.match(mainSource, /function applyWindowsAppDetails\(window\)/);

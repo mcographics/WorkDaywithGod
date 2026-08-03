@@ -90,7 +90,7 @@ The daily devotional quotation remains in the King James Version. The full-chapt
 
 ## Installing on Windows
 
-The current stable release is **Work Day with God 1.4.2 for Windows x64**. Download `Work-Day-with-God-Setup-1.4.2.exe` from the [latest GitHub release](https://github.com/mcographics/WorkDaywithGod/releases/latest) and run it.
+The current stable release is **Work Day with God 1.4.3 for Windows x64**. Download `Work-Day-with-God-Setup-1.4.3.exe` from the [latest GitHub release](https://github.com/mcographics/WorkDaywithGod/releases/latest) and run it.
 
 The current public build is an unsigned, per-user Windows installer. Windows SmartScreen may show an **Unknown publisher** warning. Review the downloaded file and choose **More info** followed by **Run anyway** if you trust the release.
 

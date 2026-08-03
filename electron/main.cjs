@@ -5,7 +5,9 @@ const { AppStore } = require("./store.cjs");
 const { ReminderScheduler } = require("./scheduler.cjs");
 const { compareVersions, fetchLatestRelease, isCheckDue, nextCheckAt, normalizeReleaseTag, releaseUrlForTag } = require("./update-checker.cjs");
 
-const APP_ID = "com.mcographics.workdaywithgod.desktop";
+const PACKAGED_APP_ID = "com.mcographics.workdaywithgod.windows";
+const DEVELOPMENT_APP_ID = "com.mcographics.workdaywithgod.development";
+const APP_ID = app.isPackaged ? PACKAGED_APP_ID : DEVELOPMENT_APP_ID;
 const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
 const compactSize = { width: 440, height: 610 };
 const readerSize = { width: 1040, height: 780 };

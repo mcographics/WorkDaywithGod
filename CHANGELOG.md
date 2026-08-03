@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.4.3] - 2026-08-02
+
+### Fixed
+
+- Isolated development Electron windows from the packaged Windows AppUserModelID and assigned a fresh stable production identity so running the development server cannot replace the installed app's taskbar icon with Electron's atom.
+
 ## [1.4.2] - 2026-08-02
 
 ### Added
@@ -200,7 +206,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.2...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.3...HEAD
+[1.4.3]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.1a...v1.4.2
 [1.4.1a]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.1...v1.4.1a
 [1.4.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.0...v1.4.1
