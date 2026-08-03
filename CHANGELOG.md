@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.4.1a] - 2026-08-02
+
+### Fixed
+
+- Added a fresh, stable Windows shell identity, a standalone taskbar `.ico`, and complete relaunch metadata reapplied after the native window is shown so the running taskbar group keeps the **Work Day with God** name and icon instead of Electron’s default atom identity.
+
 ## [1.4.1] - 2026-08-02
 
 ### Fixed
@@ -187,7 +193,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.1a...HEAD
+[1.4.1a]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.1...v1.4.1a
 [1.4.1]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/mcographics/WorkDaywithGod/compare/v1.2.2...v1.3.0

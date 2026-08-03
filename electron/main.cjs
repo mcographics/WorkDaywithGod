@@ -4,7 +4,7 @@ const path = require("path");
 const { AppStore } = require("./store.cjs");
 const { ReminderScheduler } = require("./scheduler.cjs");
 
-const APP_ID = "com.mcographics.workdaywithgod";
+const APP_ID = "com.mcographics.workdaywithgod.desktop";
 const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
 const compactSize = { width: 440, height: 610 };
 const readerSize = { width: 1040, height: 780 };
@@ -35,6 +35,26 @@ function applicationIcon() {
   return icon;
 }
 
+function windowsShellIconPath() {
+  return app.isPackaged ? path.join(process.resourcesPath, "icon.ico") : sourceIconPath();
+}
+
+function windowsRelaunchCommand() {
+  const executable = `"${process.execPath}"`;
+  return app.isPackaged ? executable : `${executable} "${app.getAppPath()}"`;
+}
+
+function applyWindowsAppDetails(window) {
+  if (process.platform !== "win32") return;
+  window.setAppDetails({
+    appId: APP_ID,
+    appIconPath: windowsShellIconPath(),
+    appIconIndex: 0,
+    relaunchCommand: windowsRelaunchCommand(),
+    relaunchDisplayName: "Work Day with God",
+  });
+}
+
 function todayId(date = new Date()) {
   return `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -57,6 +77,7 @@ function showWindow(view = "today") {
   else mainWindow.webContents.send("app:navigate", "today");
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.show();
+  applyWindowsAppDetails(mainWindow);
   mainWindow.focus();
 }
 
@@ -83,13 +104,7 @@ function createWindow() {
     },
   });
   mainWindow.setIcon(applicationIcon());
-  if (process.platform === "win32") {
-    mainWindow.setAppDetails({
-      appId: APP_ID,
-      appIconPath: app.isPackaged ? process.execPath : sourceIconPath(),
-      appIconIndex: 0,
-    });
-  }
+  applyWindowsAppDetails(mainWindow);
 
   placeBottomRight(mainWindow, compactSize);
   const devUrl = process.env.VITE_DEV_SERVER_URL || "http://127.0.0.1:5183";
@@ -98,7 +113,10 @@ function createWindow() {
   mainWindow.once("ready-to-show", () => {
     mainWindow.setIcon(applicationIcon());
     const settings = store.get().settings;
-    if (settings.showStartupCard && !settings.startInTray) mainWindow.show();
+    if (settings.showStartupCard && !settings.startInTray) {
+      mainWindow.show();
+      applyWindowsAppDetails(mainWindow);
+    }
   });
   mainWindow.on("close", (event) => {
     if (!isQuitting) {

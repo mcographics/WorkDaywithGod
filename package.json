@@ -1,6 +1,6 @@
 {
   "name": "work-day-with-god",
-  "version": "1.4.1",
+  "version": "1.4.1-a",
   "private": true,
   "author": "Work Day with God",
   "description": "An ambient desktop devotional companion.",
@@ -32,7 +32,7 @@
     "wait-on": "^8.0.3"
   },
   "build": {
-    "appId": "com.mcographics.workdaywithgod",
+    "appId": "com.mcographics.workdaywithgod.desktop",
     "productName": "Work Day with God",
     "copyright": "Copyright © 2026 Work Day with God",
     "directories": {
@@ -47,11 +47,17 @@
       "icon.png",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "build/icon.ico",
+        "to": "icon.ico"
+      }
+    ],
     "asar": true,
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico",
-      "artifactName": "Work-Day-with-God-Setup-${version}.${ext}"
+      "artifactName": "Work-Day-with-God-Setup-1.4.1a.${ext}"
     },
     "nsis": {
       "oneClick": false,

@@ -43,10 +43,20 @@ test("development startup uses a dedicated strict Vite port", () => {
 
 test("Windows taskbar identity uses the multi-resolution application icon", () => {
   assert.match(mainSource, /process\.platform === "win32" \? path\.join\("build", "icon\.ico"\)/);
-  assert.match(mainSource, /mainWindow\.setAppDetails\(\{/);
+  assert.match(mainSource, /const APP_ID = "com\.mcographics\.workdaywithgod\.desktop"/);
+  assert.equal(packageJson.build.appId, "com.mcographics.workdaywithgod.desktop");
+  assert.deepEqual(packageJson.build.extraResources, [{ from: "build/icon.ico", to: "icon.ico" }]);
+  assert.match(mainSource, /return app\.isPackaged \? path\.join\(process\.resourcesPath, "icon\.ico"\) : sourceIconPath\(\)/);
+  assert.match(mainSource, /function applyWindowsAppDetails\(window\)/);
+  assert.match(mainSource, /window\.setAppDetails\(\{/);
   assert.match(mainSource, /appId: APP_ID/);
-  assert.match(mainSource, /appIconPath: app\.isPackaged \? process\.execPath : sourceIconPath\(\)/);
+  assert.match(mainSource, /appIconPath: windowsShellIconPath\(\)/);
   assert.match(mainSource, /appIconIndex: 0/);
+  assert.match(mainSource, /relaunchCommand: windowsRelaunchCommand\(\)/);
+  assert.match(mainSource, /relaunchDisplayName: "Work Day with God"/);
+  assert.match(mainSource, /return app\.isPackaged \? executable : `\$\{executable\} "\$\{app\.getAppPath\(\)\}"`/);
+  assert.ok(mainSource.match(/applyWindowsAppDetails\(mainWindow\)/g).length >= 3);
+  assert.match(mainSource, /mainWindow\.show\(\);\s*applyWindowsAppDetails\(mainWindow\)/);
 });
 
 test("content security policy blocks remote scripts and embedded objects", () => {
