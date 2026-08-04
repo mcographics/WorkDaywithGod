@@ -4,13 +4,23 @@
 
 Work Day with God is a peaceful Windows and Android companion created to help Christians pause, read Scripture, reflect, and pray throughout the working day.
 
-**[Download Windows 1.4.3](https://github.com/mcographics/WorkDaywithGod/releases/latest)** · **[Download Android 1.0.0](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0)** · **[Discord support](https://discord.gg/2UvdpY4JSW)** · **[Changelog](CHANGELOG.md)** · **[Security policy](SECURITY.md)**
+**[Download Windows 1.4.3](https://github.com/mcographics/WorkDaywithGod/releases/latest)** · **[Download Android 1.0.0](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0)** · **[Linux 1.2.2 testing preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.2.2-linux-beta.1)** · **[Discord support](https://discord.gg/2UvdpY4JSW)** · **[Changelog](CHANGELOG.md)** · **[Security policy](SECURITY.md)**
 
 Each calendar day presents a Bible verse, an original devotional reflection, a practical question, a short prayer, and a scenic background. Gentle reminders can be scheduled around your day through Windows or native Android notifications.
 
 There are no subscriptions, advertisements, accounts, or paid features. The app is completely free to download and use.
 
+## Current platform releases
+
+| Platform | Current version | Release status | Download | Source line |
+| --- | --- | --- | --- | --- |
+| Windows x64 | 1.4.3 | Stable | [Windows release](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.4.3) | [`main`](https://github.com/mcographics/WorkDaywithGod/tree/main) |
+| Android 7.0+ | 1.0.0 | Stable GitHub APK | [Android release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0) | [`android-v1.0.0`](https://github.com/mcographics/WorkDaywithGod/tree/android-v1.0.0) |
+| Linux x64 | 1.2.2 | Testing prerelease | [Linux testing preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.2.2-linux-beta.1) | [`linux-v1.2.2-testing`](https://github.com/mcographics/WorkDaywithGod/tree/linux-v1.2.2-testing) |
+
 ## Application preview
+
+The gallery below shows **Work Day with God 1.4.3 for Windows**. Phone screenshots are included in the [Android app preview](#android-app-preview).
 
 <table>
   <tr>
@@ -62,7 +72,7 @@ There are no subscriptions, advertisements, accounts, or paid features. The app 
 
 Work Day with God is intended to provide small moments of spiritual stillness without becoming another demanding application. It can open with today’s devotional, remind you at suitable times, and then stay out of the way in the system tray.
 
-Closing the window does not stop the app. It hides the window in the system tray so scheduled reminders can continue. To close it completely, right-click the tray icon and select **Quit**.
+On Windows and Linux desktop builds, closing the window does not stop the app. It hides the window in the system tray so scheduled reminders can continue. To close it completely, right-click the tray icon and select **Quit**.
 
 ## Free, private, and offline
 
@@ -121,6 +131,8 @@ The installer creates a Start Menu shortcut and offers a desktop shortcut. Unins
 
 The current Android release is **Work Day with God 1.0.0** for phones running Android 7.0 or newer. It is a separate release line from Windows 1.4.3. Download `Work-Day-with-God-Android-1.0.0.apk` and its `.sha256` checksum from the [Android 1.0.0 release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0).
 
+The exact source snapshot used for the Android release is preserved on the dedicated [`android-v1.0.0` branch](https://github.com/mcographics/WorkDaywithGod/tree/android-v1.0.0).
+
 ### Android app preview
 
 <table>
@@ -152,17 +164,31 @@ On Android 13 and newer, allow notification access when prompted if you want dev
 
 Updates can be installed over the existing Android app by opening a newer APK signed by the same Work Day with God release key. Settings, favourites, completion history, and reading positions remain device-local. See the [complete Android guide](docs/ANDROID.md) for installation, permissions, reminders, privacy, backup, troubleshooting, and release-build details.
 
-## Linux status
+## Linux testing preview
 
-Experimental Linux packages from the earlier 1.2.2 testing preview remain available for evaluation, but Linux packages are not included with the latest stable release and Linux support should currently be considered preliminary.
+The current public Linux build is **Work Day with God 1.2.2 for Linux x64**. It remains an experimental testing prerelease and is not part of the stable Windows 1.4.3 or Android 1.0.0 release lines. No newer Linux package has been published.
 
-The experimental Linux packages use three formats:
+Download the existing packages from the [`v1.2.2-linux-beta.1` Linux Testing Preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.2.2-linux-beta.1). The exact source used for those packages is preserved separately on the [`linux-v1.2.2-testing` branch](https://github.com/mcographics/WorkDaywithGod/tree/linux-v1.2.2-testing).
+
+Three x64 package formats are available:
 
 - **AppImage** for a portable application that runs across many distributions without installation. Make it executable with `chmod +x` before launching it.
 - **DEB** for Debian, Ubuntu, Linux Mint, and other Debian-based distributions.
 - **RPM** for Fedora, RHEL, openSUSE, and other RPM-based distributions.
 
 The experimental Linux packages are unsigned. Distribution security policies may display a warning or require the user to confirm installation.
+
+Example installation commands:
+
+```bash
+chmod +x Work-Day-with-God-1.2.2-linux-x86_64.AppImage
+./Work-Day-with-God-1.2.2-linux-x86_64.AppImage
+
+sudo apt install ./Work-Day-with-God-1.2.2-linux-amd64.deb
+sudo dnf install ./Work-Day-with-God-1.2.2-linux-x86_64.rpm
+```
+
+Linux testers are encouraged to report the distribution and version, desktop environment, Wayland or X11 session, package format, reproduction steps, screenshots, and relevant terminal output through [GitHub Issues](https://github.com/mcographics/WorkDaywithGod/issues) or the [Discord support server](https://discord.gg/2UvdpY4JSW).
 
 ## For developers
 
