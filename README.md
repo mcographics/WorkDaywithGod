@@ -12,11 +12,32 @@ There are no subscriptions, advertisements, accounts, or paid features. The app 
 
 ## Application preview
 
-| Daily Scripture card | Expanded devotional reader |
-| --- | --- |
-| ![Work Day with God daily Scripture card](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/screenshots/ijTay.jpg) | ![Work Day with God expanded devotional reader](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/screenshots/7fbJC.jpg) |
-| **Reading history** | **Settings and reminders** |
-| ![Work Day with God calendar and reading history](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/screenshots/DnmHh.jpg) | ![Work Day with God reminder and startup settings](https://raw.githubusercontent.com/mcographics/WorkDaywithGod/main/screenshots/UV6ZZ.jpg) |
+<table>
+  <tr>
+    <td width="50%" align="center"><strong>Daily Verse Card</strong></td>
+    <td width="50%" align="center"><strong>Expanded Devotional Reader</strong></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/windows-showcase/01-verse-card.png" width="340" alt="Work Day with God compact Windows Verse Card showing Romans 8:28 over a scenic mountain lake"></td>
+    <td align="center"><img src="screenshots/windows-showcase/02-daily-devotional.png" width="560" alt="Work Day with God expanded Windows devotional reader with Scripture, reflection, question, and prayer"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Reading History</strong></td>
+    <td align="center"><strong>Settings Overview</strong></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/windows-showcase/03-reading-history.png" width="560" alt="Work Day with God Windows Reading History calendar with completed devotional dates"></td>
+    <td align="center"><img src="screenshots/windows-showcase/04-settings-overview.png" width="560" alt="Work Day with God Windows startup, tray, notification, and reminder settings"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Reminder Controls</strong></td>
+    <td align="center"><strong>Offline Scripture Library</strong></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/windows-showcase/05-reminder-controls.png" width="560" alt="Work Day with God Windows reminder schedule, quiet hours, and appearance controls"></td>
+    <td align="center"><img src="screenshots/windows-showcase/06-scripture-library.png" width="560" alt="Work Day with God Windows Local Scripture Library displaying Romans chapter 8 in the KJV"></td>
+  </tr>
+</table>
 
 ## What the app offers
 
