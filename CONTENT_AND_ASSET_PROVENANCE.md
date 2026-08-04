@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-08-02
 
-Applies to: Work Day with God 1.2.2
+Applies to: Work Day with God
 
 ## Purpose and scope
 
