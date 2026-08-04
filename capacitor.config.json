@@ -1,0 +1,16 @@
+{
+  "appId": "com.mcographics.workdaywithgod",
+  "appName": "Work Day with God",
+  "webDir": "dist",
+  "backgroundColor": "#161a15",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#161a15"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_work_day_with_god",
+      "iconColor": "#D8BD7F"
+    }
+  }
+}

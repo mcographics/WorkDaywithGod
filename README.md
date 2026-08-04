@@ -2,11 +2,11 @@
 
 **A completely free daily devotional app for Christians.**
 
-Work Day with God is a peaceful Windows desktop companion created to help Christians pause, read Scripture, reflect, and pray throughout the working day.
+Work Day with God is a peaceful Windows and Android companion created to help Christians pause, read Scripture, reflect, and pray throughout the working day.
 
-**[Download the latest release](https://github.com/mcographics/WorkDaywithGod/releases/latest)** · **[Discord support](https://discord.gg/2UvdpY4JSW)** · **[Changelog](CHANGELOG.md)** · **[Security policy](SECURITY.md)**
+**[Download Windows 1.4.3](https://github.com/mcographics/WorkDaywithGod/releases/latest)** · **[Download Android 1.0.0](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0)** · **[Discord support](https://discord.gg/2UvdpY4JSW)** · **[Changelog](CHANGELOG.md)** · **[Security policy](SECURITY.md)**
 
-Each calendar day presents a Bible verse, an original devotional reflection, a practical question, a short prayer, and a scenic background. Gentle reminders can be scheduled around your day, while the app remains quietly available from the Windows system tray.
+Each calendar day presents a Bible verse, an original devotional reflection, a practical question, a short prayer, and a scenic background. Gentle reminders can be scheduled around your day through Windows or native Android notifications.
 
 There are no subscriptions, advertisements, accounts, or paid features. The app is completely free to download and use.
 
@@ -28,7 +28,7 @@ There are no subscriptions, advertisements, accounts, or paid features. The app 
 - Full Bible chapter reading in nine bundled translations
 - Custom reminder times or repeating reminder intervals
 - Editable active weekdays, quiet hours, snooze, and pause controls
-- Windows notifications that open the relevant devotional
+- Windows and native Android notifications that open the relevant devotional
 - Calendar history, completed readings, favourites, and streak tracking
 - Adjustable text size and reading controls
 - Automatic sunrise-to-sunset, system, light, and dark modes; colour themes; focus mode; and reduced motion
@@ -52,9 +52,9 @@ Work Day with God is completely free for Christians to use.
 - No advertisements are displayed.
 - No internet connection is required after installation.
 - No personal reading information is sent to a server.
-- Settings, favourites, history, streaks, and reminder state remain on your computer.
+- Settings, favourites, history, streaks, and reminder state remain on your device.
 
-The application stores its local preferences and reading history in Electron’s platform-specific application-data directory. A backup is maintained so malformed state can be recovered safely.
+The application stores its local preferences and reading history in private platform-specific application storage. Windows maintains a recovery backup, while Android provides manual JSON backup export and restore through the system document and share interfaces. Android cloud backup is disabled.
 
 ## Support and feedback
 
@@ -96,6 +96,16 @@ The current public build is an unsigned, per-user Windows installer. Windows Sma
 
 The installer creates a Start Menu shortcut and offers a desktop shortcut. Uninstalling the application preserves personal settings unless those files are removed manually.
 
+## Installing on Android
+
+The current Android release is **Work Day with God 1.0.0** for phones running Android 7.0 or newer. It is a separate release line from Windows 1.4.3. Download `Work-Day-with-God-Android-1.0.0.apk` and its `.sha256` checksum from the [Android 1.0.0 release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0).
+
+The Android APK is signed with the project’s dedicated private release key, but it is distributed directly through GitHub rather than Google Play. Android may ask you to allow **Install unknown apps** for the browser or file manager you use to open the APK. That permission can be turned off again after installation.
+
+On Android 13 and newer, allow notification access when prompted if you want devotional reminders. For the most precise delivery, open **Settings → Notifications and reminders → Precise reminder timing** and allow Android’s **Alarms & reminders** access. Android’s battery management can delay inexact reminders when that optional access is not enabled.
+
+Updates can be installed over the existing Android app by opening a newer APK signed by the same Work Day with God release key. Settings, favourites, completion history, and reading positions remain device-local. See the [complete Android guide](docs/ANDROID.md) for installation, permissions, reminders, privacy, backup, troubleshooting, and release-build details.
+
 ## Linux status
 
 Experimental Linux packages from the earlier 1.2.2 testing preview remain available for evaluation, but Linux packages are not included with the latest stable release and Linux support should currently be considered preliminary.
@@ -132,6 +142,16 @@ Create the Windows installer:
 ```powershell
 npm run dist:win
 ```
+
+Create and synchronize the Android project, build an installable debug APK, or build the signed GitHub release APK:
+
+```powershell
+npm run android:sync
+npm run android:debug
+npm run android:release
+```
+
+The Android build requires Android SDK Platform 36, Build-Tools 36.0.0, Node.js 22 or newer, and a supported JDK from version 17 through 24. The included PowerShell build helper discovers the standard Android SDK location and a local Temurin 21 installation. A signed release additionally requires the untracked signing-properties file described in the [Android guide](docs/ANDROID.md); private signing material must never be committed.
 
 For experimental testing, Windows developers can create Linux x64 AppImage, DEB, and RPM packages through Docker Desktop’s Linux engine:
 

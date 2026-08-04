@@ -1,4 +1,8 @@
 node_modules/
+platform-tools-latest-windows/
+*.jks
+*.keystore
+*signing*.properties
 dist/
 release/
 /adverts/

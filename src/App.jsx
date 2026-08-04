@@ -8,6 +8,7 @@ import { calendarStartMonth, isAdjacentReadingAvailable, isCalendarDateAvailable
 import { calculateStreak, dateId, devotionalForDate, isoDate, loadCatalogue } from "./catalogue";
 import { getChapter, translations } from "./scripture";
 import { isSunUp } from "./solar.mjs";
+import { defaultSettings, isMobilePlatform, platform } from "./platform";
 
 function useResolvedColourMode(colourMode) {
   const [position, setPosition] = useState(null);
@@ -17,13 +18,7 @@ function useResolvedColourMode(colourMode) {
     setNow(new Date());
     const timer = window.setInterval(() => setNow(new Date()), 60_000);
     let active = true;
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        ({ coords }) => active && setPosition({ latitude: coords.latitude, longitude: coords.longitude }),
-        () => {},
-        { enableHighAccuracy: false, maximumAge: 24 * 60 * 60 * 1000, timeout: 5000 },
-      );
-    }
+    desktop.getPosition().then((position) => active && setPosition(position)).catch(() => {});
     return () => {
       active = false;
       window.clearInterval(timer);
@@ -32,68 +27,12 @@ function useResolvedColourMode(colourMode) {
   return colourMode === "auto" ? (isSunUp(now, position) ? "light" : "dark") : colourMode;
 }
 
-const defaultSettings = {
-  launchAtLogin: true, closeToTray: true, showStartupCard: true, startInTray: false,
-  notificationsEnabled: true, notificationSound: false, remindLaterMinutes: 60, reminderMode: "times",
-  reminderTimes: ["09:00", "12:00", "15:00", "17:00"], intervalMinutes: 60,
-  activeDays: [1, 2, 3, 4, 5], quietHours: { enabled: true, start: "18:00", end: "08:00" },
-  theme: "gold", colorMode: "system", imageOverlay: 38, imageTransition: true,
-  focusMode: false, fontScale: 1, scriptureFontScale: 1, reducedMotion: false,
-  autoScrollEnabled: true, autoScrollSpeed: 2, hoverPausesScroll: true,
-  rememberReadingPosition: true, showReflectionPrompt: true, showPrayer: true, showAttribution: true,
-  automaticDailyContent: true, automaticDailyImage: true, preventFutureDevotionals: false, showStreak: true,
-  translation: "KJV", updateCheckFrequency: "weekly",
-};
 const intervalMinuteOptions = Array.from({ length: 120 }, (_, index) => index + 1);
 const remindLaterOptions = Array.from({ length: 9 }, (_, index) => (index + 1) * 10);
-let browserState = { settings: { ...defaultSettings }, favourites: [], completions: {}, readingPositions: {}, snoozeUntil: 0, remindAt: 0, migrationComplete: true };
-const browserStateSnapshot = () => ({
-  ...browserState,
-  settings: { ...browserState.settings },
-  favourites: [...browserState.favourites],
-  completions: { ...browserState.completions },
-  readingPositions: { ...browserState.readingPositions },
-});
-const desktop = window.desktop || {
-  minimize() {}, close() {}, setMode() {},
-  getState: async () => browserStateSnapshot(),
-  updateSettings: async (patch) => {
-    browserState = { ...browserState, settings: { ...browserState.settings, ...patch } };
-    return browserStateSnapshot();
-  },
-  updateState: async (patch) => {
-    browserState = { ...browserState, ...patch };
-    return browserStateSnapshot();
-  },
-  migrateLegacy: async () => browserStateSnapshot(),
-  snooze: async () => ({}),
-  remindLater: async (remindAt) => {
-    browserState = { ...browserState, remindAt, snoozeUntil: remindAt };
-    return browserStateSnapshot();
-  },
-  testNotification: async () => ({ supported: false }), openDataFolder: async () => "",
-  exportData: async () => ({ canceled: true }), importData: async () => ({ canceled: true }),
-  resetHistory: async () => {
-    browserState = { ...browserState, completions: {}, readingPositions: {} };
-    return browserStateSnapshot();
-  },
-  resetFavourites: async () => {
-    browserState = { ...browserState, favourites: [] };
-    return browserStateSnapshot();
-  },
-  resetAll: async () => {
-    browserState = { settings: { ...defaultSettings }, favourites: [], completions: {}, readingPositions: {}, snoozeUntil: 0, remindAt: 0, migrationComplete: true };
-    return browserStateSnapshot();
-  },
-  getAppInfo: async () => ({ version: "1.0.0", notificationSupported: false }),
-  getUpdateStatus: async () => ({ currentVersion: "1.0.0", latestVersion: "", updateAvailable: false, lastCheckedAt: 0, nextCheckAt: 0, frequency: browserState.settings.updateCheckFrequency, checking: false, error: "", supported: false }),
-  checkForUpdates: async () => { throw new Error("Update checks are available in the Windows desktop app."); },
-  openUpdateRelease: async () => false,
-  openSupportDiscord: async () => { window.open("https://discord.gg/2UvdpY4JSW", "_blank", "noopener,noreferrer"); },
-  onNavigate: () => () => {}, onOpenDate: () => () => {}, onStateChanged: () => () => {}, onUpdateStatus: () => () => {},
-};
+const desktop = platform;
 
 function WindowControls() {
+  if (isMobilePlatform) return null;
   return <div className="window-controls">
     <button title="Minimize the window to the taskbar" aria-label="Minimize" onClick={desktop.minimize}><Minus size={16} /></button>
     <button title="Hide the app in the system tray while reminders continue" aria-label="Close to tray" onClick={desktop.close}><X size={16} /></button>
@@ -341,6 +280,16 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
     } catch (error) { setMessage(error.message); }
     finally { setCheckingForUpdates(false); }
   };
+  const requestPreciseReminders = async () => {
+    setMessage("");
+    try {
+      const result = await desktop.requestExactNotificationPermission();
+      setAppInfo(await desktop.getAppInfo());
+      setMessage(result.granted
+        ? "Precise Android reminder timing is enabled. Your reminders have been refreshed."
+        : "Precise timing was not enabled. Android will still deliver reminders, but may delay them to save battery.");
+    } catch (error) { setMessage(error.message); }
+  };
   const paused = appState.snoozeUntil > Date.now();
   const lastUpdateCheck = updateStatus?.lastCheckedAt ? new Date(updateStatus.lastCheckedAt).toLocaleString() : "Not checked yet";
   const nextUpdateCheck = settings.updateCheckFrequency === "never"
@@ -352,7 +301,7 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
     ["focusMode", "Image-free focus mode", "Hide scenic backgrounds for a distraction-free reading view."],
     ["reducedMotion", "Reduced motion", "Disable transitions and animated scrolling for greater visual comfort."],
     ["autoScrollEnabled", "Auto-scroll", "Allow the reader to scroll devotional text automatically."],
-    ["hoverPausesScroll", "Pause auto-scroll while hovering", "Temporarily pause automatic scrolling while the pointer is over the text."],
+    ...(!isMobilePlatform ? [["hoverPausesScroll", "Pause auto-scroll while hovering", "Temporarily pause automatic scrolling while the pointer is over the text."]] : []),
     ["rememberReadingPosition", "Remember reading position", "Return to the last scroll position when reopening a devotional."],
     ["showReflectionPrompt", "Show reflection question", "Display the practical pause-and-reflect question in each devotional."],
     ["showPrayer", "Show closing prayer", "Display the short prayer at the end of each devotional."],
@@ -367,32 +316,44 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
   ];
   return <section className="panel-view settings-view">
     <div className="panel-heading settings-heading">
-      <div><span>Make it yours</span><h1>Settings</h1><p>Everything is stored locally on this computer.</p></div>
+      <div><span>Make it yours</span><h1>Settings</h1><p>Everything is stored locally on this {isMobilePlatform ? "device" : "computer"}.</p></div>
       <button title="Close Settings and return to the compact daily Verse Card" className="settings-back-button" onClick={onBack}><ArrowLeft size={16} /><span><strong>Back to Verse Card</strong><small>Return to today’s compact Scripture card.</small></span></button>
     </div>
     <div className="settings-sections">
-      <div className="settings-group"><h2>Startup & tray</h2>
+      {!isMobilePlatform && <div className="settings-group"><h2>Startup & tray</h2>
         <div className="setting-row"><div><h3>Launch at login</h3><p>Open today’s card when you sign in to Windows.</p></div><Toggle label="Launch at login" checked={settings.launchAtLogin} onChange={(launchAtLogin) => onPatchSettings({ launchAtLogin })} /></div>
         <div className="setting-row"><div><h3>Show card at startup</h3><p>Display today’s verse after Windows login.</p></div><Toggle label="Show card at startup" checked={settings.showStartupCard} onChange={(showStartupCard) => onPatchSettings({ showStartupCard })} /></div>
         <div className="setting-row"><div><h3>Start silently in tray</h3><p>Keep the startup card hidden while reminders remain active.</p></div><Toggle label="Start in tray" checked={settings.startInTray} onChange={(startInTray) => onPatchSettings({ startInTray })} /></div>
-      </div>
+      </div>}
       <div className="settings-group"><h2>Gentle reminders</h2>
         <div className="setting-row"><div><h3>Notifications</h3><p>Master switch for all scheduled reminders.</p></div><Toggle label="Notifications" checked={settings.notificationsEnabled} onChange={(notificationsEnabled) => onPatchSettings({ notificationsEnabled })} /></div>
-        <div className="setting-row"><div><h3>Notification sound</h3><p>Allow Windows to play its notification sound.</p></div><Toggle label="Notification sound" checked={settings.notificationSound} onChange={(notificationSound) => onPatchSettings({ notificationSound })} /></div>
-        <div className="setting-row stack"><div><h3>Schedule style</h3><p>Choose fixed reminder times or a repeating minute interval.</p></div><div className="segmented"><button title="Send reminders at the individual times listed below" className={settings.reminderMode === "times" ? "selected" : ""} onClick={() => onPatchSettings({ reminderMode: "times" })}>Specific times</button><button title="Repeat reminders after a chosen number of minutes" className={settings.reminderMode === "interval" ? "selected" : ""} onClick={() => onPatchSettings({ reminderMode: "interval" })}>Interval</button></div></div>
+        <div className="setting-row"><div><h3>Notification sound</h3><p>Allow {isMobilePlatform ? "Android" : "Windows"} to play its notification sound.</p></div><Toggle label="Notification sound" checked={settings.notificationSound} onChange={(notificationSound) => onPatchSettings({ notificationSound })} /></div>
+        {isMobilePlatform && <div className={`setting-row precise-reminders ${appInfo?.exactNotificationSupported ? "enabled" : ""}`}>
+          <div><h3>Precise reminder timing</h3><p>{appInfo?.exactNotificationSupported ? "Allowed by Android. Fixed times and intervals are scheduled as precisely as the phone permits." : "Allow Alarms & reminders access so Android does not place broad delivery windows around your selected times."}</p></div>
+          {appInfo?.exactNotificationSupported
+            ? <span className="permission-status" role="status"><Check size={15} /> Enabled</span>
+            : <button className="setting-action-button" title="Open Android’s Alarms & reminders access for Work Day with God" onClick={requestPreciseReminders}>Allow precise timing</button>}
+        </div>}
+        <div className="setting-row stack"><div><h3>Schedule style</h3><p>Choose daily reading times or a repeating devotional timer.</p></div><div className="segmented"><button title="Send Daily reading notifications at the individual times listed below" className={settings.reminderMode === "times" ? "selected" : ""} onClick={() => onPatchSettings({ reminderMode: "times" })}>Daily reading</button><button title="Repeat Devotional timer notifications after a chosen number of minutes" className={settings.reminderMode === "interval" ? "selected" : ""} onClick={() => onPatchSettings({ reminderMode: "interval" })}>Devotional timer</button></div></div>
         {settings.reminderMode === "times" ? <div className="time-list" title="Times when notifications may be sent on active weekdays">{settings.reminderTimes.map((time, index) => <label title={`Reminder scheduled for ${time}`} key={`${time}-${index}`}><input aria-label={`Reminder time ${index + 1}`} type="time" value={time} onChange={(event) => updateTime(index, event.target.value)} /><button title={`Remove the ${time} reminder`} aria-label={`Remove ${time}`} onClick={() => onPatchSettings({ reminderTimes: settings.reminderTimes.filter((_, itemIndex) => itemIndex !== index) })}><X size={12} /></button></label>)}<button title="Add another specific reminder time" onClick={() => onPatchSettings({ reminderTimes: [...settings.reminderTimes, "10:00"].sort() })}>+ Add time</button></div>
-          : <label title="Set how many minutes pass between reminders" className="field-label"><span><strong>Reminder interval</strong><small>Choose any whole-minute interval from 1 to 120 minutes.</small></span><select aria-label="Reminder interval in minutes" value={settings.intervalMinutes} onChange={(event) => onPatchSettings({ intervalMinutes: Number(event.target.value) })}>{intervalMinuteOptions.map((minutes) => <option key={minutes} value={minutes}>{minutes} {minutes === 1 ? "minute" : "minutes"}</option>)}</select></label>}
+          : <label title="Set how many minutes pass between devotional timer notifications" className="field-label"><span><strong>Devotional timer interval</strong><small>Choose any whole-minute interval from 1 to 120 minutes.</small></span><select aria-label="Devotional timer interval in minutes" value={settings.intervalMinutes} onChange={(event) => onPatchSettings({ intervalMinutes: Number(event.target.value) })}>{intervalMinuteOptions.map((minutes) => <option key={minutes} value={minutes}>{minutes} {minutes === 1 ? "minute" : "minutes"}</option>)}</select></label>}
         <div className="weekday-picker" title="Choose which weekdays may send devotional reminders">{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((label, day) => <button title={`${settings.activeDays.includes(day) ? "Disable" : "Enable"} reminders on ${label}`} key={label} className={settings.activeDays.includes(day) ? "selected" : ""} onClick={() => toggleDay(day)}>{label}</button>)}</div>
         {!settings.activeDays.length && <div className="schedule-warning" role="status">Select at least one day to enable scheduled reminders and the Verse Card timer.</div>}
         <div className="setting-row"><div><h3>Quiet hours</h3><p>No notifications during this period.</p></div><Toggle label="Quiet hours" checked={settings.quietHours.enabled} onChange={(enabled) => updateQuiet({ enabled })} /></div>
         {settings.quietHours.enabled && <div className="quiet-times" title="Notifications remain silent between these local times"><input aria-label="Quiet hours start time" type="time" value={settings.quietHours.start} onChange={(event) => updateQuiet({ start: event.target.value })} /><span>to</span><input aria-label="Quiet hours end time" type="time" value={settings.quietHours.end} onChange={(event) => updateQuiet({ end: event.target.value })} /></div>}
         <div className="snooze-row"><Bell size={18} /><span>{!settings.activeDays.length ? "Reminders are inactive until a day is selected" : paused ? `Paused until ${new Date(appState.snoozeUntil).toLocaleString()}` : "Reminders are active"}</span>{settings.activeDays.length > 0 && (paused ? <button title="End the current pause and resume scheduled reminders" onClick={() => onSnooze(0)}>Resume</button> : <><button title="Temporarily stop reminders for the next hour" onClick={() => onSnooze(Date.now() + 60 * 60 * 1000)}>Pause 1 hour</button><button title="Stop reminders until midnight tonight" onClick={() => { const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0,0,0,0); onSnooze(tomorrow.getTime()); }}>Until tomorrow</button></>)}</div>
         <label title="Set the snooze duration used by the Verse Card clock button" className="field-label"><span><strong>“Remind me later” duration</strong><small>Choose from 10 to 90 minutes in 10-minute increments.</small></span><select aria-label="Remind me later duration in minutes" value={settings.remindLaterMinutes} onChange={(event) => onPatchSettings({ remindLaterMinutes: Number(event.target.value) })}>{remindLaterOptions.map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}</select></label>
-        <div className="action-row"><button disabled={!settings.notificationsEnabled} title={settings.notificationsEnabled ? "Display a sample Windows notification using the current notification settings" : "Enable notifications before sending a test notification"} onClick={() => run(async () => { const result = await desktop.testNotification(); if (!result.supported) throw new Error("Windows notifications are unavailable on this system."); return result; }, "Test notification sent.")}>Send test notification</button></div>
+        {isMobilePlatform
+          ? <div className="action-row notification-test-actions">
+            <button disabled={!settings.notificationsEnabled} title="Display a sample Daily reading notification" onClick={() => run(async () => { const result = await desktop.testNotification("daily-reading"); if (!result.supported) throw new Error("Android notifications are unavailable or not permitted."); return result; }, "Daily reading test sent.")}>Test daily reading</button>
+            <button disabled={!settings.notificationsEnabled} title="Display a sample Remind me later notification" onClick={() => run(async () => { const result = await desktop.testNotification("remind-later"); if (!result.supported) throw new Error("Android notifications are unavailable or not permitted."); return result; }, "Remind me later test sent.")}>Test remind me later</button>
+            <button disabled={!settings.notificationsEnabled} title="Display a sample Devotional timer notification" onClick={() => run(async () => { const result = await desktop.testNotification("devotional-timer"); if (!result.supported) throw new Error("Android notifications are unavailable or not permitted."); return result; }, "Devotional timer test sent.")}>Test devotional timer</button>
+          </div>
+          : <div className="action-row"><button disabled={!settings.notificationsEnabled} title={settings.notificationsEnabled ? "Display a sample Windows notification using the current notification settings" : "Enable notifications before sending a test notification"} onClick={() => run(async () => { const result = await desktop.testNotification(); if (!result.supported) throw new Error("Windows notifications are unavailable or not permitted."); return result; }, "Test notification sent.")}>Send test notification</button></div>}
       </div>
       <div className="settings-group"><h2>Appearance & reading</h2>
         <div className="theme-options expanded">{["gold","blue","forest","burgundy","lavender","terracotta","sage","rose","teal","charcoal"].map((theme) => <button title={`Use the ${theme} accent colour throughout the app`} key={theme} className={settings.theme === theme ? "chosen" : ""} onClick={() => onPatchSettings({ theme })}><i className={theme} />{theme}</button>)}</div>
-        <label title="Choose an automatic sunrise-to-sunset appearance, follow Windows, or use a fixed mode" className="field-label"><span><strong>Colour mode</strong><small>Auto uses light mode from local sunrise to sunset, then switches to dark.</small></span><select aria-label="Colour mode" value={settings.colorMode} onChange={(event) => onPatchSettings({ colorMode: event.target.value })}><option value="auto">Auto · sunrise to sunset</option><option value="system">Follow Windows</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+        <label title={`Choose an automatic sunrise-to-sunset appearance, follow ${isMobilePlatform ? "Android" : "Windows"}, or use a fixed mode`} className="field-label"><span><strong>Colour mode</strong><small>Auto uses light mode from local sunrise to sunset, then switches to dark.</small></span><select aria-label="Colour mode" value={settings.colorMode} onChange={(event) => onPatchSettings({ colorMode: event.target.value })}><option value="auto">Auto · sunrise to sunset</option><option value="system">Follow {isMobilePlatform ? "Android" : "Windows"}</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
         <label title="Choose the translation used when reading a complete Bible chapter" className="field-label"><span><strong>Bible translation</strong><small>Used in the full-chapter drawer; daily anchor quotations remain KJV.</small></span><select aria-label="Bible translation" value={settings.translation} onChange={(event) => onPatchSettings({ translation: event.target.value })}>{translations.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select></label>
         <label title="Adjust the size of devotional reflection paragraphs and questions" className="range-field"><span><strong>Devotional text size</strong><small>Changes the main reflection text, not the Verse Card or Scripture drawer.</small></span><input aria-label="Devotional text size" type="range" min=".8" max="1.4" step=".05" value={settings.fontScale} onChange={(event) => onPatchSettings({ fontScale: Number(event.target.value) })} /></label>
         <label title="Adjust the text size inside the full-chapter Scripture drawer" className="range-field"><span><strong>Scripture text size</strong><small>Changes Bible verses in the full-chapter reader.</small></span><input aria-label="Scripture text size" type="range" min=".8" max="1.4" step=".05" value={settings.scriptureFontScale} onChange={(event) => onPatchSettings({ scriptureFontScale: Number(event.target.value) })} /></label>
@@ -405,20 +366,21 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
       </div>
       <div className="settings-group"><h2>History & personal data</h2>
         <div className="action-row"><button title="Delete completion dates, streak information, and saved reading positions" onClick={() => run(async () => ({ state: await desktop.resetHistory() }), "Reading history cleared.")}>Clear reading history</button><button title="Remove every devotional saved as a favourite" onClick={() => run(async () => ({ state: await desktop.resetFavourites() }), "Favourites cleared.")}>Clear favourites</button></div>
-        <div className="action-row"><button title="Open the Windows folder containing this app’s local settings and reading data" onClick={() => run(() => desktop.openDataFolder(), "Local data folder opened.")}>Open data folder</button><button title="Save settings, favourites, and reading history to a portable JSON backup" onClick={() => run(() => desktop.exportData(), "Backup exported.")}>Export backup</button><button title="Restore settings and reading data from a previously exported JSON backup" onClick={() => run(() => desktop.importData(), "Backup imported.")}>Import backup</button></div>
+        <div className="action-row">{!isMobilePlatform && <button title="Open the Windows folder containing this app’s local settings and reading data" onClick={() => run(() => desktop.openDataFolder(), "Local data folder opened.")}>Open data folder</button>}<button title="Save settings, favourites, and reading history to a portable JSON backup" onClick={() => run(() => desktop.exportData(), "Backup exported.")}>Export backup</button><button title="Restore settings and reading data from a previously exported JSON backup" onClick={() => run(() => desktop.importData(), "Backup imported.")}>Import backup</button></div>
         <div className="action-row danger"><button title="Restore every setting to default and erase all local reading history and favourites" onClick={() => window.confirm("Reset all Work Day with God settings and history?") && run(async () => ({ state: await desktop.resetAll() }), "Application reset.")}>Reset entire application</button></div>
       </div>
-      <div className="settings-group"><h2>Updates</h2>
+      {!isMobilePlatform && <div className="settings-group"><h2>Updates</h2>
         <label title="Choose how often Work Day with God checks GitHub for a newer public release" className="field-label"><span><strong>Check for updates</strong><small>Uses GitHub’s public release information. No account, sign-in, or background service is required.</small></span><select aria-label="Automatic update check frequency" value={settings.updateCheckFrequency} onChange={(event) => updateFrequency(event.target.value)}><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="never">Never</option></select></label>
         <div className={`update-status-card ${updateStatus?.updateAvailable ? "available" : ""}`} role="status">
           <RefreshCw size={19} className={checkingForUpdates || updateStatus?.checking ? "checking" : ""} />
           <span><strong>{checkingForUpdates || updateStatus?.checking ? "Checking GitHub…" : updateStatus?.updateAvailable ? `Version ${updateStatus.latestVersion} is available` : updateStatus?.error ? "The last check could not be completed" : "Your update status"}</strong><small>Installed: {updateStatus?.currentVersion || appInfo?.version || "unknown"} · Last checked: {lastUpdateCheck}</small><small>{nextUpdateCheck}</small>{updateStatus?.error && <em>{updateStatus.error}</em>}</span>
         </div>
         <div className="action-row"><button disabled={checkingForUpdates || updateStatus?.checking} title="Check GitHub now for the latest public Work Day with God release" onClick={checkNow}>{checkingForUpdates || updateStatus?.checking ? "Checking…" : "Check now"}</button>{updateStatus?.updateAvailable && <button title={`Open the Work Day with God ${updateStatus.latestVersion} release on GitHub`} onClick={() => run(() => desktop.openUpdateRelease(), "Opened the latest release on GitHub.")}><ExternalLink size={12} />View update on GitHub</button>}</div>
-      </div>
+      </div>}
+      {isMobilePlatform && <div className="settings-group"><h2>Android updates</h2><div className="update-status-card"><RefreshCw size={19} /><span><strong>Installed version {appInfo?.version || "unknown"}</strong><small>Updates can be installed from a new Work Day with God APK or delivered through Google Play.</small></span></div></div>}
       <div className="settings-group"><h2>About</h2>
         <div className="about-settings">
-          <div className="about-settings-intro"><BookOpen size={25} /><div><h3>Work Day with God</h3><strong>Work. Faith. Purpose.</strong><p>Work Day with God is a completely free Christian devotional app for Windows, created to bring Scripture, reflection, prayer, and peaceful encouragement into your daily work routine. It works offline, requires no account or subscription, and stores your settings and reading activity locally on your computer.</p></div></div>
+          <div className="about-settings-intro"><BookOpen size={25} /><div><h3>Work Day with God</h3><strong>Work. Faith. Purpose.</strong><p>Work Day with God is a completely free Christian devotional app for Windows and Android, created to bring Scripture, reflection, prayer, and peaceful encouragement into your daily work routine. It works offline, requires no account or subscription, and stores your settings and reading activity locally on your device.</p></div></div>
           <div className="about-settings-details">
             <div><UserRound size={18} /><span><small>Author / Developer</small><strong>Kenneth Salmon</strong><em>Creator and developer of Work Day with God.</em></span></div>
             <div><MessageCircle size={18} /><span><small>Discord support</small><button title="Join the Work Day with God support server on Discord" onClick={() => desktop.openSupportDiscord()}>discord.gg/2UvdpY4JSW</button><em>For support, feedback, or bug reports.</em></span></div>
@@ -441,7 +403,7 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
     if (nextView === view) return;
     for (const timer of contentTimers.current) window.clearTimeout(timer);
     contentTimers.current = [];
-    if (settings.reducedMotion) {
+    if (isMobilePlatform || settings.reducedMotion) {
       setContentVisible(true);
       setView(nextView);
       return;
@@ -500,7 +462,7 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
       <button title="Return to the compact Verse Card" className="wordmark" onClick={onBack}><span>WORK DAY</span><em>with God</em></button>
       <nav>
         <button title="Open the devotional assigned to today’s local date" className={view === "today" ? "selected" : ""} onClick={showToday}><BookOpen size={16} /> Today</button>
-        {!settings.preventFutureDevotionals && <button title="Browse devotionals assigned to today and later dates" className={view === "future" || view === "future-reading" ? "selected" : ""} onClick={showFuture}><CalendarDays size={16} /> Future Devotionals</button>}
+        {!settings.preventFutureDevotionals && <button title="Browse devotionals assigned to today and later dates" className={view === "future" || view === "future-reading" ? "selected" : ""} onClick={showFuture}><CalendarDays size={16} /> {isMobilePlatform ? "Future" : "Future Devotionals"}</button>}
         <button title="Browse devotional dates before today and review reading activity" className={view === "history" || view === "history-reading" ? "selected" : ""} onClick={showHistory}><History size={16} /> History</button>
         <button title="Configure reminders, appearance, reading behavior, and local data" className={view === "settings" ? "selected" : ""} onClick={() => navigateView("settings")}><Settings size={16} /> Settings</button>
       </nav><WindowControls />
@@ -525,15 +487,17 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(() => isoDate());
   const [startupError, setStartupError] = useState("");
   const stateRevision = useRef(0);
+  const modeRef = useRef(mode);
   const reducedMotion = useRef(false);
   const surfaceTimers = useRef([]);
   reducedMotion.current = Boolean(appState?.settings.reducedMotion);
+  modeRef.current = mode;
   const selectedCalendarDate = useMemo(() => new Date(`${selectedDate}T12:00:00`), [selectedDate]);
   const devotional = catalogue.length ? devotionalForDate(catalogue, selectedCalendarDate) : null;
   const transitionSurface = (nextMode, update) => {
     for (const timer of surfaceTimers.current) window.clearTimeout(timer);
     surfaceTimers.current = [];
-    if (reducedMotion.current) {
+    if (isMobilePlatform || reducedMotion.current) {
       setSurfaceVisible(true);
       update();
       desktop.setMode(nextMode);
@@ -569,6 +533,24 @@ export default function App() {
       if (active) setAppState(state);
     }).catch((error) => active && setStartupError(error.message || "The application could not be opened."));
     const removeNavigate = desktop.onNavigate((view) => {
+      if (view === "card") {
+        transitionSurface("card", () => {
+          setSelectedDate(isoDate());
+          setMode("card");
+        });
+        return;
+      }
+      if (view === "back") {
+        if (modeRef.current === "card") {
+          desktop.exitApp();
+          return;
+        }
+        transitionSurface("card", () => {
+          setSelectedDate(isoDate());
+          setMode("card");
+        });
+        return;
+      }
       transitionSurface("reader", () => {
         setReaderView(view === "settings" ? "settings" : "today");
         if (view !== "settings") setSelectedDate(isoDate());
@@ -578,7 +560,7 @@ export default function App() {
     const removeDate = desktop.onOpenDate((id) => {
       const year = new Date().getFullYear();
       transitionSurface("reader", () => {
-        setSelectedDate(`${year}-${id}`);
+        setSelectedDate(/^\d{4}-\d{2}-\d{2}$/.test(id) ? id : `${year}-${id}`);
         setReaderView("today");
         setMode("reader");
       });
@@ -609,7 +591,25 @@ export default function App() {
   const closeReader = () => {
     transitionSurface("card", () => { setSelectedDate(isoDate()); setMode("card"); });
   };
-  const patchSettings = async (patch) => setAppState(await desktop.updateSettings(patch));
+  const patchSettings = async (patch) => {
+    const revision = ++stateRevision.current;
+    setAppState((current) => ({
+      ...current,
+      settings: {
+        ...current.settings,
+        ...patch,
+        ...(patch.quietHours ? { quietHours: { ...current.settings.quietHours, ...patch.quietHours } } : {}),
+      },
+    }));
+    try {
+      const persisted = await desktop.updateSettings(patch);
+      if (revision === stateRevision.current) setAppState(persisted);
+      return persisted;
+    } catch (error) {
+      if (revision === stateRevision.current) setAppState(await desktop.getState());
+      throw error;
+    }
+  };
   const patchState = async (patch, replace = false) => {
     const revision = ++stateRevision.current;
     if (replace) {

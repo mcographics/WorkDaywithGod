@@ -6,6 +6,47 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [Android 1.0.0] - 2026-08-03
+
+### Added
+
+- Added the first public Android edition as a native Capacitor application for Android 7.0 and newer, with its own `android-v1.0.0` release line while Windows remains on version 1.4.3.
+- Brought the complete offline devotional catalogue, nine bundled Bible translations, full-chapter reader, favourites, completed readings, streaks, reading positions, and appearance preferences to Android.
+- Added device-local Android persistence with no account, sign-in, subscription, advertising, cloud database, or analytics service.
+- Added Android JSON backup export through the system share sheet and JSON restore through the system file picker.
+- Added native Android status-bar, safe-area, app lifecycle, external-link, sharing, coarse-location, and system back-button integrations.
+- Added Android launcher artwork, adaptive icons, branded splash screens, and a dedicated notification status icon.
+- Added a touch-first phone layout with larger controls, bottom navigation, mobile reader sizing, safe-area spacing, and responsive devotional content.
+- Redesigned Settings as a full-width, vertically scrolling mobile screen with touch-sized rows, controls, segmented selectors, and clear permission state.
+- Redesigned History and Future Devotionals calendars for narrow phone screens, including larger date targets, compact weekday labels, readable month navigation, and responsive calendar legends.
+- Added native **Daily reading** notifications for user-selected local times. Opening one routes directly to today’s full devotional.
+- Added native **Remind me later** notifications from the Verse Card in 10-minute increments from 10 through 90 minutes. Opening one returns to the compact Verse Card.
+- Added native repeating **Devotional timer** notifications with whole-minute intervals from 1 through 120 minutes. Opening one returns to the compact Verse Card.
+- Added separate Android notification channels for Daily reading, Remind me later, and Devotional timer reminders, with matching silent-channel variants when notification sound is disabled.
+- Added three separate Settings test actions so every Android notification type can be verified independently.
+- Added optional Android **Alarms & reminders** access for precise delivery, `allowWhileIdle` scheduling, visible permission state, and automatic rescheduling after the permission changes.
+- Added Android scheduling safeguards for active weekdays, overnight quiet hours, temporary pause state, disabled notifications, and the empty-active-days state.
+
+### Changed
+
+- Kept the repository-level package version at Windows 1.4.3 while moving Android’s visible version name and monotonically increasing build code into Android-specific Gradle properties.
+- Replaced desktop-window assumptions with a platform boundary that keeps Electron’s narrow preload API on Windows and uses Capacitor plugins only inside the native Android build.
+- Updated the Content Security Policy development endpoint to the project’s strict Vite port 5183 and added safe-area viewport support for modern phones.
+- Updated product documentation to give Windows and Android separate installation links, version numbers, build commands, permissions, and update instructions.
+
+### Security
+
+- Disabled Android cloud backup and cleartext network traffic for the application package.
+- Kept all devotional content and personal reading state inside the installed app unless the user explicitly exports a backup or opens an external support link.
+- Added a dedicated Android production signing identity stored outside the repository and a release build that verifies zip alignment and APK signatures before reporting success.
+- Added a SHA-256 checksum sidecar for the signed APK so downloaded release assets can be verified independently.
+
+### Verified
+
+- Passed the complete automated project test suite, including Android reminder date generation, quiet-hour boundaries, notification definitions, channels, and navigation destinations.
+- Built and exercised the Android app on a physical Samsung SM-G781W running Android 13.
+- Confirmed notification permission and exact-alarm access, exact scheduling for the pending reminder queue, successful delivery of all three reminder types, and zero app-specific Android log errors during final reminder testing.
+
 ## [1.4.3] - 2026-08-02
 
 ### Fixed
@@ -206,7 +247,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.3...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/android-v1.0.0...HEAD
+[Android 1.0.0]: https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0
 [1.4.3]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.1a...v1.4.2
 [1.4.1a]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.1...v1.4.1a

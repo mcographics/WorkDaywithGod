@@ -144,6 +144,327 @@ blockquote { width: 100%; margin: 18px 0 11px; font-family: Georgia, serif; font
 .mode-dark { --paper: #101112; --deep: #050506; --text: #f1f2f3; --body-text: #d5d7da; --muted-text: #a9adb2; --subtle-text: #858a90; --surface: rgba(255,255,255,.045); --line: rgba(255,255,255,.11); }
 .mode-dark .reflection, .mode-dark .panel-view, .mode-dark .scripture-drawer { color: var(--text); }
 .mode-dark .reflection p, .mode-dark .panel-view p { color: var(--body-text); }
+
+/* Android uses the same visual language with a touch-first, edge-to-edge layout. */
+html.platform-mobile, html.platform-mobile body, html.platform-mobile #root {
+  background: #161a15;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(216, 189, 127, .2);
+}
+.platform-mobile button, .platform-mobile select, .platform-mobile input {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+.platform-mobile button { -webkit-user-select: none; user-select: none; }
+.platform-mobile button:active { opacity: .68; }
+.platform-mobile .app-surface {
+  height: 100dvh;
+  transition: none;
+  filter: none;
+  transform: none;
+  will-change: auto;
+}
+.platform-mobile .app-surface.surface-hidden {
+  opacity: 1;
+  filter: none;
+  transform: none;
+  pointer-events: auto;
+}
+.platform-mobile .compact-shell, .platform-mobile .reader-shell {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.platform-mobile .drag-bar {
+  height: calc(58px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 18px 0;
+  -webkit-app-region: no-drag;
+  backdrop-filter: none;
+}
+.platform-mobile .brand-mark em { font-size: 15px; }
+.platform-mobile .header-clock { left: auto; right: 18px; transform: translateY(-50%); align-items: flex-end; text-align: right; }
+.platform-mobile .verse-card {
+  inset: calc(58px + env(safe-area-inset-top)) 0 calc(82px + env(safe-area-inset-bottom));
+  padding: 24px clamp(24px, 8vw, 42px);
+}
+.platform-mobile blockquote { font-size: clamp(26px, 7.6vw, 38px); line-height: 1.24; }
+.platform-mobile .verse-long blockquote { font-size: clamp(22px, 6.5vw, 31px); }
+.platform-mobile .verse-extra-long blockquote { font-size: clamp(19px, 5.6vw, 26px); }
+.platform-mobile .read-button { margin-top: 20px; padding: 12px 15px; font-size: 12px; }
+.platform-mobile .read-button, .platform-mobile .card-toast { backdrop-filter: none; }
+.platform-mobile .compact-footer {
+  left: 22px;
+  right: 22px;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  padding-top: 12px;
+  font-size: 11px;
+}
+.platform-mobile .footer-actions button { width: 44px; height: 44px; display: grid; place-items: center; }
+.platform-mobile .card-toast { bottom: calc(78px + env(safe-area-inset-bottom)); max-width: calc(100vw - 36px); white-space: normal; text-align: center; }
+
+.platform-mobile .reader-header {
+  height: calc(58px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 18px 0;
+  -webkit-app-region: no-drag;
+}
+.platform-mobile .wordmark { width: auto; min-height: 44px; }
+.platform-mobile .reader-header nav {
+  position: fixed;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(66px + env(safe-area-inset-bottom));
+  padding: 5px 6px env(safe-area-inset-bottom);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  background: color-mix(in srgb, var(--deep) 96%, black);
+  border-top: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 -8px 26px rgba(0,0,0,.2);
+}
+.platform-mobile .reader-header nav button {
+  min-width: 0;
+  min-height: 54px;
+  padding: 5px 2px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  font-size: 8px;
+  line-height: 1.05;
+  white-space: normal;
+  text-align: center;
+}
+.platform-mobile .reader-header nav button svg { width: 19px; height: 19px; }
+.platform-mobile .reader-content {
+  height: calc(100% - 58px - env(safe-area-inset-top) - 66px - env(safe-area-inset-bottom));
+  border-radius: 0;
+  transition: none;
+  filter: none;
+  transform: none;
+}
+.platform-mobile .reader-content.content-hidden {
+  opacity: 1;
+  filter: none;
+  transform: none;
+  pointer-events: auto;
+}
+.platform-mobile .reader-layout {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.platform-mobile .reader-aside {
+  padding: 14px 20px 13px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px 14px;
+}
+.platform-mobile .back-link { grid-column: 1; min-height: 36px; }
+.platform-mobile .today-label { grid-column: 1; margin-top: 2px; }
+.platform-mobile .reader-aside h1 { grid-column: 1; font-size: 25px; margin: 1px 0 3px; }
+.platform-mobile .aside-verse {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.platform-mobile .aside-verse strong { display: inline; margin: 0 0 0 8px; }
+.platform-mobile .scripture-link { grid-column: 1; margin-top: 1px; min-height: 38px; }
+.platform-mobile .day-nav { grid-column: 1; margin-top: 2px; padding-top: 6px; }
+.platform-mobile .complete-button { grid-column: 2; grid-row: 1 / span 3; align-self: center; width: 88px; min-height: 54px; margin: 0; padding: 8px; }
+.platform-mobile .reflection { padding: 27px 22px 74px; overflow-y: auto; }
+.platform-mobile .reflection p { font-size: calc(17px * var(--font-scale)); line-height: 1.7; }
+.platform-mobile .reflection-prompt { margin: 34px 0; padding-left: 18px; }
+.platform-mobile .reflection-prompt h2 { font-size: calc(22px * var(--font-scale)); }
+.platform-mobile .prayer { padding: 21px 20px; }
+.platform-mobile .reading-tools {
+  min-height: 66px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 4px 6px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(68px, 1fr);
+  gap: 2px;
+  overflow-x: auto;
+  background: var(--paper);
+}
+.platform-mobile .reading-tools button { min-height: 56px; padding: 4px; }
+.platform-mobile .reading-tools .divider { display: none; }
+.platform-mobile .scripture-backdrop { inset: 0; z-index: 40; backdrop-filter: none; }
+.platform-mobile .scripture-drawer { width: 100%; max-width: none; padding-bottom: env(safe-area-inset-bottom); }
+.platform-mobile .scripture-header { padding: calc(20px + env(safe-area-inset-top)) 20px 16px; }
+.platform-mobile .translation-select { margin: 12px 20px 0; }
+.platform-mobile .translation-select select { min-width: 0; max-width: 66vw; }
+.platform-mobile .chapter-text { padding: 18px 22px 50px; }
+.platform-mobile .chapter-text p { font-size: calc(16px * var(--scripture-scale, 1)); }
+
+.platform-mobile .panel-view {
+  height: 100%;
+  min-width: 0;
+  max-width: 100vw;
+  padding: 18px 14px calc(24px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+.platform-mobile .panel-heading h1 { margin: 5px 0 3px; font-size: 28px; line-height: 1.08; }
+.platform-mobile .panel-heading p { max-width: 32rem; font-size: 11px; line-height: 1.4; }
+
+.platform-mobile .calendar-view {
+  padding: 14px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.platform-mobile .calendar-heading {
+  flex: 0 0 auto;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 11px;
+}
+.platform-mobile .calendar-heading > div:first-child { min-width: 0; }
+.platform-mobile .calendar-heading > div:first-child > span { font-size: 9px; }
+.platform-mobile .calendar-heading h1 { font-size: 27px; }
+.platform-mobile .month-nav {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+}
+.platform-mobile .month-nav button { width: 44px; height: 44px; border-radius: 12px; }
+.platform-mobile .month-nav strong { min-width: 0; font-size: 16px; }
+.platform-mobile .calendar-grid {
+  width: 100%;
+  min-width: 0;
+  margin-top: 10px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: 26px;
+  grid-auto-rows: 44px;
+  gap: 3px;
+  align-content: start;
+}
+.platform-mobile .calendar-grid .weekday {
+  height: 26px;
+  padding: 7px 0 0;
+  font-size: 8px;
+  letter-spacing: .05em;
+}
+.platform-mobile .calendar-grid button, .platform-mobile .calendar-grid .unavailable-day {
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  padding: 2px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+.platform-mobile .calendar-grid button > span, .platform-mobile .calendar-grid .unavailable-day > span { font-size: 12px; }
+.platform-mobile .calendar-grid button small { display: none; }
+.platform-mobile .calendar-grid button svg { top: 3px; right: 3px; width: 9px; height: 9px; }
+
+.platform-mobile .settings-view { padding: 16px 12px 20px; }
+.platform-mobile .settings-heading {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 11px;
+}
+.platform-mobile .settings-heading > div:first-child > span { font-size: 9px; }
+.platform-mobile .settings-heading h1 { font-size: 29px; }
+.platform-mobile .settings-back-button {
+  width: 100%;
+  min-height: 48px;
+  justify-content: flex-start;
+  padding: 7px 10px;
+  border-radius: 12px;
+}
+.platform-mobile .settings-back-button strong { font-size: 12px; }
+.platform-mobile .settings-back-button small { font-size: 10px; }
+.platform-mobile .settings-sections { margin-top: 13px; gap: 11px; }
+.platform-mobile .settings-group { padding: 0; border-radius: 13px; }
+.platform-mobile .settings-group > h2 { padding: 11px 13px; font-size: 9px; }
+.platform-mobile .setting-row, .platform-mobile .field-label, .platform-mobile .range-field { gap: 11px; }
+.platform-mobile .setting-row { min-height: 58px; padding: 10px 12px; }
+.platform-mobile .setting-row.compact { min-height: 54px; }
+.platform-mobile .setting-row h3 { font-size: 12px; }
+.platform-mobile .setting-row p { font-size: 10px; line-height: 1.35; }
+.platform-mobile .setting-row:not(.stack) > div, .platform-mobile .field-label > span, .platform-mobile .range-field > span { min-width: 0; }
+.platform-mobile .setting-row.stack { align-items: stretch; flex-direction: column; }
+.platform-mobile .segmented { width: 100%; }
+.platform-mobile .segmented button { flex: 1; min-height: 40px; }
+.platform-mobile .field-label, .platform-mobile .range-field {
+  min-height: 58px;
+  padding: 10px 12px;
+  align-items: stretch;
+  flex-direction: column;
+}
+.platform-mobile .field-label select { width: 100%; max-width: none; }
+.platform-mobile .range-field input { width: 100%; }
+.platform-mobile .time-list, .platform-mobile .weekday-picker, .platform-mobile .quiet-times, .platform-mobile .snooze-row, .platform-mobile .action-row { padding: 10px 12px; }
+.platform-mobile .weekday-picker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.platform-mobile .weekday-picker button { min-width: 0; min-height: 42px; padding: 5px 1px; }
+.platform-mobile .theme-options.expanded { grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 10px 8px; gap: 3px; }
+.platform-mobile .theme-options.expanded button { min-width: 0; padding: 5px 2px; font-size: 8px; }
+.platform-mobile .theme-options.expanded i { width: 26px; height: 15px; }
+.platform-mobile .time-list { gap: 7px; }
+.platform-mobile .time-list label { flex: 1 1 132px; min-width: 0; }
+.platform-mobile .time-list label input { min-width: 0; width: 100%; }
+.platform-mobile .action-row { flex-wrap: wrap; }
+.platform-mobile .action-row button { flex: 1 1 130px; }
+.platform-mobile .about-settings-details { grid-template-columns: 1fr; }
+.platform-mobile .about-settings { padding: 14px 12px; gap: 13px; }
+.platform-mobile .about-settings-intro { grid-template-columns: 32px 1fr; gap: 9px; }
+.platform-mobile .about-settings-intro h3 { font-size: 18px; }
+.platform-mobile .about-settings-details > div { padding: 11px; }
+
+.platform-mobile .toggle {
+  position: relative;
+  width: 52px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 22px;
+  background: transparent;
+}
+.platform-mobile .toggle::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 8px;
+  height: 28px;
+  border-radius: 16px;
+  background: #777872;
+  transition: background .16s ease;
+}
+.platform-mobile .toggle span {
+  position: absolute;
+  left: 5px;
+  top: 11px;
+  width: 22px;
+  height: 22px;
+  transition: transform .16s ease;
+}
+.platform-mobile .toggle.on { background: transparent; }
+.platform-mobile .toggle.on::before { background: var(--accent); }
+.platform-mobile .toggle.on span { transform: translateX(20px); }
+
+@media (max-width: 390px) {
+  .platform-mobile .header-clock span:first-child { display: none; }
+  .platform-mobile .compact-footer > div:first-child { max-width: 190px; }
+  .platform-mobile .aside-verse { display: none; }
+  .platform-mobile .complete-button { grid-row: 1 / span 2; }
+  .platform-mobile .reader-aside { padding-block: 10px; }
+  .platform-mobile .field-label, .platform-mobile .range-field { align-items: stretch; }
+  .platform-mobile .setting-row { align-items: center; }
+}
 .mode-dark .settings-group, .mode-dark .calendar-grid button { background: rgba(255,255,255,.035); border-color: rgba(255,255,255,.1); }
 .mode-dark .setting-row, .mode-dark .field-label, .mode-dark .range-field, .mode-dark .time-list, .mode-dark .weekday-picker, .mode-dark .quiet-times, .mode-dark .snooze-row { border-color: rgba(255,255,255,.08); }
 .mode-dark input, .mode-dark select { background: #1d1f21 !important; color: #f1f2f3 !important; border-color: #3b3e42 !important; }
@@ -257,6 +578,13 @@ blockquote { width: 100%; margin: 18px 0 11px; font-family: Georgia, serif; font
 .action-row button:disabled { opacity:.48; cursor:wait; }
 .action-row button svg { vertical-align:-2px; margin-right:5px; }
 .action-row.danger button { color:#a34f4f; border-color:rgba(163,79,79,.3); }
+.setting-action-button { flex:0 0 auto; border:1px solid color-mix(in srgb,var(--accent) 35%,transparent); border-radius:8px; background:color-mix(in srgb,var(--accent) 8%,transparent); color:var(--accent); padding:8px 11px; font-size:9px; cursor:pointer; }
+.permission-status { flex:0 0 auto; display:inline-flex; align-items:center; gap:5px; color:#4f7c5a; font-size:9px; font-weight:700; }
+.precise-reminders.enabled { background:color-mix(in srgb,#4f7c5a 5%,transparent); }
+.platform-mobile .precise-reminders { align-items:flex-start; }
+.platform-mobile .precise-reminders .setting-action-button { min-height:44px; width:100%; font-size:13px; }
+.platform-mobile .precise-reminders .permission-status { min-height:32px; font-size:12px; }
+.platform-mobile .notification-test-actions button { flex-basis:100%; min-height:44px; }
 .update-status-card { border-top:1px solid var(--line); padding:15px 20px; display:flex; align-items:flex-start; gap:11px; color:var(--muted-text); }
 .update-status-card > svg { flex:0 0 auto; margin-top:2px; color:var(--accent); }
 .update-status-card > svg.checking { animation:update-spin 1s linear infinite; }
