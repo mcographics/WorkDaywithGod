@@ -100,6 +100,31 @@ The installer creates a Start Menu shortcut and offers a desktop shortcut. Unins
 
 The current Android release is **Work Day with God 1.0.0** for phones running Android 7.0 or newer. It is a separate release line from Windows 1.4.3. Download `Work-Day-with-God-Android-1.0.0.apk` and its `.sha256` checksum from the [Android 1.0.0 release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0).
 
+### Android app preview
+
+<table>
+  <tr>
+    <td align="center"><strong>Daily Verse Card</strong></td>
+    <td align="center"><strong>Daily Devotional</strong></td>
+    <td align="center"><strong>Future Devotionals</strong></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/android-showcase/01-hero-verse-card.png" width="260" alt="Work Day with God Android Daily Verse Card showing Romans 8:28 over a scenic mountain lake"></td>
+    <td align="center"><img src="screenshots/android-showcase/02-daily-devotional.png" width="260" alt="Work Day with God Android expanded daily devotional reader"></td>
+    <td align="center"><img src="screenshots/android-showcase/03-future-calendar.png" width="260" alt="Work Day with God Android Future Devotionals calendar"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Reminder Settings</strong></td>
+    <td align="center"><strong>Reminder Controls</strong></td>
+    <td align="center"><strong>Offline Scripture Library</strong></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/android-showcase/04-reminder-settings.png" width="260" alt="Work Day with God Android notification and reminder schedule settings"></td>
+    <td align="center"><img src="screenshots/android-showcase/05-reminder-types-and-appearance.png" width="260" alt="Work Day with God Android reminder types, quiet hours, and appearance controls"></td>
+    <td align="center"><img src="screenshots/android-showcase/06-offline-scripture-library.png" width="260" alt="Work Day with God Android offline Scripture Library displaying Romans chapter 8 in the KJV"></td>
+  </tr>
+</table>
+
 The Android APK is signed with the project’s dedicated private release key, but it is distributed directly through GitHub rather than Google Play. Android may ask you to allow **Install unknown apps** for the browser or file manager you use to open the APK. That permission can be turned off again after installation.
 
 On Android 13 and newer, allow notification access when prompted if you want devotional reminders. For the most precise delivery, open **Settings → Notifications and reminders → Precise reminder timing** and allow Android’s **Alarms & reminders** access. Android’s battery management can delay inexact reminders when that optional access is not enabled.
