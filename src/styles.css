@@ -183,7 +183,23 @@ html.platform-mobile, html.platform-mobile body, html.platform-mobile #root {
   backdrop-filter: none;
 }
 .platform-mobile .brand-mark em { font-size: 15px; }
+.platform-android .brand-mark span { font-size: 12px; }
+.platform-android .brand-mark em { font-size: 18px; }
 .platform-mobile .header-clock { left: auto; right: 18px; transform: translateY(-50%); align-items: flex-end; text-align: right; }
+.platform-android .header-clock {
+  left: 41%;
+  right: 5%;
+  top: calc(env(safe-area-inset-top) + 29px);
+  transform: translateY(-50%);
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: .01em;
+}
+.platform-android .header-clock span { justify-content: center; gap: 7px; }
+.platform-android .header-clock strong { font-size: 10px; letter-spacing: .1em; }
 .platform-mobile .verse-card {
   inset: calc(58px + env(safe-area-inset-top)) 0 calc(82px + env(safe-area-inset-bottom));
   padding: 24px clamp(24px, 8vw, 42px);
@@ -305,6 +321,189 @@ html.platform-mobile, html.platform-mobile body, html.platform-mobile #root {
 .platform-mobile .translation-select select { min-width: 0; max-width: 66vw; }
 .platform-mobile .chapter-text { padding: 18px 22px 50px; }
 .platform-mobile .chapter-text p { font-size: calc(16px * var(--scripture-scale, 1)); }
+
+/* Android consolidates reader actions into a menu so the devotional owns the screen. */
+.platform-android .reader-header {
+  height: 0;
+  padding: 0;
+  background: transparent;
+}
+.platform-android .reader-header .wordmark,
+.platform-android .reader-header .window-controls,
+.platform-android .reader-header nav .global-settings-nav { display: none; }
+.platform-android .reader-content {
+  height: calc(100% - 66px - env(safe-area-inset-bottom));
+}
+.platform-android .reader-layout {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.platform-android .reader-aside {
+  padding: calc(10px + env(safe-area-inset-top)) 16px 11px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  gap: 3px 14px;
+}
+.platform-android .back-link,
+.platform-android .aside-verse,
+.platform-android .scripture-link,
+.platform-android .day-nav,
+.platform-android .complete-button,
+.platform-android .reading-tools { display: none; }
+.platform-android .today-label {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: end;
+  margin: 0;
+  font-size: 9px;
+}
+.platform-android .reader-aside h1 {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
+  margin: 2px 0 0;
+  max-width: 22ch;
+  font-size: clamp(23px, 6.6vw, 27px);
+  line-height: 1.04;
+}
+.platform-android .reader-menu-button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  min-width: 72px;
+  min-height: 44px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 12px;
+  background: rgba(255,255,255,.045);
+  color: rgba(255,255,255,.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.platform-android .reflection { padding: 22px 24px 36px; }
+
+.platform-android .reader-menu-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0 0 calc(66px + env(safe-area-inset-bottom));
+  padding: calc(16px + env(safe-area-inset-top)) 12px 12px;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0,0,0,.58);
+}
+.platform-android .reader-menu {
+  width: 100%;
+  max-height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--paper);
+  color: var(--text);
+  box-shadow: 0 20px 60px rgba(0,0,0,.38);
+}
+.platform-android .reader-menu > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 13px;
+}
+.platform-android .reader-menu > header span {
+  color: var(--accent);
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+}
+.platform-android .reader-menu > header h2 {
+  margin: 3px 0 0;
+  font-family: Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.platform-android .reader-menu > header button {
+  flex: 0 0 44px;
+  width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted-text);
+  display: grid;
+  place-items: center;
+}
+.platform-android .reading-mode-action {
+  width: 100%;
+  min-height: 67px;
+  margin-bottom: 10px;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 46%, var(--line));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+.platform-android .reading-mode-action > svg { color: var(--accent); flex: 0 0 auto; }
+.platform-android .reading-mode-action span { display: flex; flex-direction: column; gap: 3px; }
+.platform-android .reading-mode-action strong { font-size: 12px; }
+.platform-android .reading-mode-action small { color: var(--muted-text); font-size: 9px; line-height: 1.3; }
+.platform-android .reader-menu-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.platform-android .reader-menu-actions button {
+  min-width: 0;
+  min-height: 57px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted-text);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: left;
+}
+.platform-android .reader-menu-actions button > svg,
+.platform-android .reader-menu-actions button > strong { flex: 0 0 20px; color: var(--accent); text-align: center; }
+.platform-android .reader-menu-actions button.active { border-color: color-mix(in srgb, var(--accent) 58%, transparent); color: var(--accent); }
+.platform-android .reader-menu-actions button:disabled { opacity: .34; }
+.platform-android .reader-menu-actions .reader-menu-settings { grid-column: 1 / -1; }
+
+.platform-android .devotional-reading-mode .reader-header nav,
+.platform-android .devotional-reading-mode .reader-aside,
+.platform-android .devotional-reading-mode .reading-tools { display: none; }
+.platform-android .devotional-reading-mode .reader-content { height: 100%; }
+.platform-android .devotional-reading-mode .reader-layout { grid-template-rows: minmax(0, 1fr); }
+.platform-android .devotional-reading-mode .reflection {
+  padding: calc(28px + env(safe-area-inset-top)) 24px calc(42px + env(safe-area-inset-bottom));
+}
+.platform-android .reading-mode-exit {
+  position: fixed;
+  z-index: 35;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 12px;
+  width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  color: var(--muted-text);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 5px 18px rgba(0,0,0,.16);
+}
 
 .platform-mobile .panel-view {
   height: 100%;
@@ -462,6 +661,7 @@ html.platform-mobile, html.platform-mobile body, html.platform-mobile #root {
   .platform-mobile .aside-verse { display: none; }
   .platform-mobile .complete-button { grid-row: 1 / span 2; }
   .platform-mobile .reader-aside { padding-block: 10px; }
+  .platform-android .reader-aside { padding-block: calc(9px + env(safe-area-inset-top)) 10px; }
   .platform-mobile .field-label, .platform-mobile .range-field { align-items: stretch; }
   .platform-mobile .setting-row { align-items: center; }
 }

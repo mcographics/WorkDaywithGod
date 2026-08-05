@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import {
   ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight,
-  Clock3, ExternalLink, Heart, History, Info, MessageCircle, Minus, Pause, Play, RefreshCw, RotateCcw, Settings, SlidersHorizontal, UserRound, X,
+  Clock3, ExternalLink, Heart, History, Info, Maximize2, Menu, MessageCircle, Minimize2, Minus, Pause, Play, RefreshCw, RotateCcw, Settings, SlidersHorizontal, UserRound, X,
 } from "lucide-react";
 import { calendarStartMonth, isAdjacentReadingAvailable, isCalendarDateAvailable } from "./calendar.mjs";
 import { calculateStreak, dateId, devotionalForDate, isoDate, loadCatalogue } from "./catalogue";
 import { getChapter, translations } from "./scripture";
 import { isSunUp } from "./solar.mjs";
-import { defaultSettings, isMobilePlatform, platform } from "./platform";
+import { defaultSettings, isMobilePlatform, platform, platformName } from "./platform";
 
 function useResolvedColourMode(colourMode) {
   const [position, setPosition] = useState(null);
@@ -130,13 +130,15 @@ function ScriptureDrawer({ reference, translation, scriptureFontScale, onTransla
   </div>;
 }
 
-function ReadingView({ devotional, selectedDate, dateScope, settings, appState, onBack, onSettings, onPatchSettings, onPatchState, onToggleFavourite, onToggleComplete, onSelectDate }) {
+function ReadingView({ devotional, selectedDate, dateScope, settings, appState, readingMode, onReadingModeChange, onBack, onSettings, onPatchSettings, onPatchState, onToggleFavourite, onToggleComplete, onSelectDate }) {
   const [scrolling, setScrolling] = useState(false);
   const [hoverPaused, setHoverPaused] = useState(false);
   const [scriptureOpen, setScriptureOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const scrollRef = useRef(null);
   const favourite = appState.favourites.includes(devotional.id);
   const completed = Boolean(appState.completions[selectedDate]);
+  const isAndroidReader = isMobilePlatform && platformName === "android";
 
   useEffect(() => {
     if (!scrolling || hoverPaused) return;
@@ -157,6 +159,7 @@ function ReadingView({ devotional, selectedDate, dateScope, settings, appState, 
       }
     };
   }, [selectedDate]);
+  useEffect(() => setMenuOpen(false), [selectedDate, readingMode]);
 
   const adjacent = (direction) => {
     const next = new Date(`${selectedDate}T12:00:00`);
@@ -172,6 +175,11 @@ function ReadingView({ devotional, selectedDate, dateScope, settings, appState, 
   const canGoPrevious = isAdjacentReadingAvailable(dateScope, previousDate);
   const canGoNext = isAdjacentReadingAvailable(dateScope, nextDate);
 
+  const runMenuAction = (action) => {
+    setMenuOpen(false);
+    action();
+  };
+
   return <div className="reader-layout">
     <aside className="reader-aside">
       <button title="Return to the compact Verse Card" className="back-link" onClick={onBack}><ArrowLeft size={16} /> Verse card</button>
@@ -181,10 +189,12 @@ function ReadingView({ devotional, selectedDate, dateScope, settings, appState, 
       <button title="Open the complete Bible chapter containing today’s anchor verse" className="scripture-link" onClick={() => setScriptureOpen(true)}><BookOpen size={15} /> Read the full chapter</button>
       <div className="day-nav"><button title="Open the previous available devotional" disabled={!canGoPrevious} aria-label="Previous devotional" onClick={() => adjacent(-1)}><ArrowLeft size={16} /></button><span>Day {devotional.dayNumber} of 366</span><button title="Open the next available devotional" disabled={!canGoNext} aria-label="Next devotional" onClick={() => adjacent(1)}><ArrowRight size={16} /></button></div>
       <button title={completed ? "Remove this devotional from completed readings" : "Record this devotional as completed"} className={`complete-button ${completed ? "done" : ""}`} onClick={onToggleComplete}>{completed ? <><Check size={17} /> Reading completed</> : "Mark as complete"}</button>
+      {isAndroidReader && <button type="button" className="reader-menu-button" aria-haspopup="dialog" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={19} /><span>Menu</span></button>}
     </aside>
     <article className="reflection" ref={scrollRef} style={{ "--font-scale": settings.fontScale }}
       onMouseEnter={() => settings.hoverPausesScroll && setHoverPaused(true)}
       onMouseLeave={() => setHoverPaused(false)}>
+      {isAndroidReader && readingMode && <button type="button" className="reading-mode-exit" aria-label="Exit devotional reading mode" title="Exit devotional reading mode" onClick={() => onReadingModeChange(false)}><Minimize2 size={18} /></button>}
       <div className="article-kicker">{devotional.theme} · A workday reflection</div>
       {devotional.reflection.map((paragraph, index) => <p key={index} className={index === 0 ? "lead" : ""}>{paragraph}</p>)}
       {settings.showReflectionPrompt && <section className="reflection-prompt"><span>Pause & reflect</span><h2>{devotional.prompt}</h2></section>}
@@ -201,6 +211,25 @@ function ReadingView({ devotional, selectedDate, dateScope, settings, appState, 
       <button onClick={() => { setScrolling(false); scrollRef.current.scrollTop = 0; }} title="Stop auto-scroll and return to the beginning"><RotateCcw size={17} /><span>Restart Auto-Scroll</span></button>
       <button onClick={onSettings} title="Open reading and appearance settings"><Settings size={17} /><span>Reading settings</span></button>
     </div>
+    {isAndroidReader && menuOpen && <div className="reader-menu-backdrop" role="presentation" onClick={() => setMenuOpen(false)}>
+      <section className="reader-menu" role="dialog" aria-modal="true" aria-labelledby="reader-menu-title" onClick={(event) => event.stopPropagation()}>
+        <header><div><span>Devotional controls</span><h2 id="reader-menu-title">Reading menu</h2></div><button type="button" aria-label="Close reading menu" title="Close reading menu" onClick={() => setMenuOpen(false)}><X size={20} /></button></header>
+        <button type="button" className="reading-mode-action" onClick={() => runMenuAction(() => onReadingModeChange(true))}><Maximize2 size={19} /><span><strong>Devotional reading mode</strong><small>Show only the devotional and use the full screen.</small></span></button>
+        <div className="reader-menu-actions">
+          <button type="button" onClick={() => runMenuAction(onBack)}><ArrowLeft size={18} /><span>Verse Card</span></button>
+          <button type="button" className={completed ? "active" : ""} onClick={() => runMenuAction(onToggleComplete)}><Check size={18} /><span>{completed ? "Reading completed" : "Mark complete"}</span></button>
+          <button type="button" onClick={() => runMenuAction(() => setScriptureOpen(true))}><BookOpen size={18} /><span>Full chapter</span></button>
+          <button type="button" className={favourite ? "active" : ""} onClick={() => runMenuAction(onToggleFavourite)}><Heart size={18} fill={favourite ? "currentColor" : "none"} /><span>{favourite ? "Favourited" : "Favourite"}</span></button>
+          <button type="button" disabled={!canGoPrevious} onClick={() => runMenuAction(() => adjacent(-1))}><ArrowLeft size={18} /><span>Previous devotional</span></button>
+          <button type="button" disabled={!canGoNext} onClick={() => runMenuAction(() => adjacent(1))}><ArrowRight size={18} /><span>Next devotional</span></button>
+          <button type="button" onClick={() => runMenuAction(() => onPatchSettings({ fontScale: Math.max(.8, settings.fontScale - .1) }))}><strong>A−</strong><span>Decrease text</span></button>
+          <button type="button" onClick={() => runMenuAction(() => onPatchSettings({ fontScale: Math.min(1.4, settings.fontScale + .1) }))}><strong>A+</strong><span>Increase text</span></button>
+          <button type="button" disabled={!settings.autoScrollEnabled || settings.reducedMotion} onClick={() => runMenuAction(() => setScrolling(!scrolling))}>{scrolling ? <Pause size={18} /> : <Play size={18} />}<span>{scrolling ? "Pause scroll" : "Auto-scroll"}</span></button>
+          <button type="button" onClick={() => runMenuAction(() => { setScrolling(false); scrollRef.current.scrollTop = 0; })}><RotateCcw size={18} /><span>Restart reading</span></button>
+          <button type="button" className="reader-menu-settings" onClick={() => runMenuAction(onSettings)}><Settings size={18} /><span>Reading settings</span></button>
+        </div>
+      </section>
+    </div>}
     {scriptureOpen && <ScriptureDrawer reference={devotional.reference} translation={settings.translation} scriptureFontScale={settings.scriptureFontScale} onTranslation={(translation) => onPatchSettings({ translation })} onFontScale={(scriptureFontScale) => onPatchSettings({ scriptureFontScale })} onClose={() => setScriptureOpen(false)} />}
   </div>;
 }
@@ -394,14 +423,21 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
   </section>;
 }
 
-function Reader({ catalogue, devotional, selectedDate, settings, appState, initialView, onBack, onSelectDate, onPatchSettings, onPatchState, onSnooze }) {
+function Reader({ catalogue, devotional, selectedDate, settings, appState, initialView, readingModeExitRequest, onReadingModeChange, onBack, onSelectDate, onPatchSettings, onPatchState, onSnooze }) {
   const [view, setView] = useState(initialView || "today");
   const [contentVisible, setContentVisible] = useState(true);
   const contentTimers = useRef([]);
+  const [readingMode, setReadingMode] = useState(false);
   const resolvedColourMode = useResolvedColourMode(settings.colorMode);
   const navigateView = (nextView) => {
+  const updateReadingMode = (active) => {
+    setReadingMode(active);
+    onReadingModeChange(active);
+    desktop.setReadingMode(active);
+  };
     if (nextView === view) return;
     for (const timer of contentTimers.current) window.clearTimeout(timer);
+    if (readingMode) updateReadingMode(false);
     contentTimers.current = [];
     if (isMobilePlatform || settings.reducedMotion) {
       setContentVisible(true);
@@ -421,8 +457,13 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
   };
   useEffect(() => setView(initialView || "today"), [initialView]);
   useEffect(() => () => {
+  useEffect(() => {
+    if (readingMode) updateReadingMode(false);
+  }, [readingModeExitRequest]);
     for (const timer of contentTimers.current) window.clearTimeout(timer);
   }, []);
+    onReadingModeChange(false);
+    desktop.setReadingMode(false);
   useEffect(() => {
     if (settings.preventFutureDevotionals && (view === "future" || view === "future-reading")) {
       onSelectDate(new Date());
@@ -457,22 +498,22 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
     else completions[selectedDate] = Date.now();
     onPatchState({ completions });
   };
-  return <main className={`reader-shell theme-${settings.theme} accent-${settings.theme} mode-${resolvedColourMode} ${settings.reducedMotion ? "reduced-motion" : ""}`}>
+  return <main className={`reader-shell theme-${settings.theme} accent-${settings.theme} mode-${resolvedColourMode} ${settings.reducedMotion ? "reduced-motion" : ""} ${readingMode ? "devotional-reading-mode" : ""}`}>
     <header className="reader-header">
       <button title="Return to the compact Verse Card" className="wordmark" onClick={onBack}><span>WORK DAY</span><em>with God</em></button>
       <nav>
         <button title="Open the devotional assigned to today’s local date" className={view === "today" ? "selected" : ""} onClick={showToday}><BookOpen size={16} /> Today</button>
         {!settings.preventFutureDevotionals && <button title="Browse devotionals assigned to today and later dates" className={view === "future" || view === "future-reading" ? "selected" : ""} onClick={showFuture}><CalendarDays size={16} /> {isMobilePlatform ? "Future" : "Future Devotionals"}</button>}
         <button title="Browse devotional dates before today and review reading activity" className={view === "history" || view === "history-reading" ? "selected" : ""} onClick={showHistory}><History size={16} /> History</button>
-        <button title="Configure reminders, appearance, reading behavior, and local data" className={view === "settings" ? "selected" : ""} onClick={() => navigateView("settings")}><Settings size={16} /> Settings</button>
+        <button title="Configure reminders, appearance, reading behavior, and local data" className={`global-settings-nav ${view === "settings" ? "selected" : ""}`} onClick={() => navigateView("settings")}><Settings size={16} /> Settings</button>
       </nav><WindowControls />
     </header>
     <div className={`reader-content ${contentVisible ? "content-visible" : "content-hidden"} ${settings.reducedMotion ? "content-no-motion" : ""}`}>
-      {view === "today" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="today" settings={settings} appState={appState} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
+      {view === "today" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="today" settings={settings} appState={appState} readingMode={readingMode} onReadingModeChange={updateReadingMode} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
       {view === "history" && <CalendarView key="history" catalogue={catalogue} appState={appState} mode="history" onSelectDate={(date) => { onSelectDate(date); navigateView("history-reading"); }} />}
-      {view === "history-reading" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="past" settings={settings} appState={appState} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
+      {view === "history-reading" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="past" settings={settings} appState={appState} readingMode={readingMode} onReadingModeChange={updateReadingMode} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
       {view === "future" && !settings.preventFutureDevotionals && <CalendarView key="future" catalogue={catalogue} appState={appState} mode="future" onSelectDate={(date) => { onSelectDate(date); navigateView("future-reading"); }} />}
-      {view === "future-reading" && !settings.preventFutureDevotionals && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="future" settings={settings} appState={appState} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
+      {view === "future-reading" && !settings.preventFutureDevotionals && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="future" settings={settings} appState={appState} readingMode={readingMode} onReadingModeChange={updateReadingMode} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}
       {view === "settings" && <SettingsView settings={settings} appState={appState} onBack={onBack} onPatchSettings={onPatchSettings} onSnooze={onSnooze} onPatchState={onPatchState} />}
     </div>
   </main>;
@@ -487,8 +528,10 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(() => isoDate());
   const [startupError, setStartupError] = useState("");
   const stateRevision = useRef(0);
+  const [readingModeExitRequest, setReadingModeExitRequest] = useState(0);
   const modeRef = useRef(mode);
   const reducedMotion = useRef(false);
+  const readingModeRef = useRef(false);
   const surfaceTimers = useRef([]);
   reducedMotion.current = Boolean(appState?.settings.reducedMotion);
   modeRef.current = mode;
@@ -542,6 +585,11 @@ export default function App() {
       }
       if (view === "back") {
         if (modeRef.current === "card") {
+        if (readingModeRef.current) {
+          readingModeRef.current = false;
+          setReadingModeExitRequest((request) => request + 1);
+          return;
+        }
           desktop.exitApp();
           return;
         }
@@ -639,7 +687,7 @@ export default function App() {
         onRead={openReader} onSnooze={onRemindLater}
         onFavourite={() => patchState({ favourites: favourite ? appState.favourites.filter((id) => id !== devotional.id) : [...appState.favourites, devotional.id] })} />
       : <Reader catalogue={catalogue} devotional={devotional} selectedDate={selectedDate} settings={appState.settings} appState={appState}
-        initialView={readerView} onBack={closeReader} onSelectDate={(date) => setSelectedDate(isoDate(date))}
+        initialView={readerView} readingModeExitRequest={readingModeExitRequest} onReadingModeChange={(active) => { readingModeRef.current = active; }} onBack={closeReader} onSelectDate={(date) => setSelectedDate(isoDate(date))}
         onPatchSettings={patchSettings} onPatchState={patchState} onSnooze={onSnooze} />}
   </div>;
 }

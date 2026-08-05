@@ -56,6 +56,7 @@ export const platformName = isNativeAndroid ? "android" : (window.desktop ? "win
 if (typeof document !== "undefined") {
   document.documentElement.dataset.platform = platformName;
   document.documentElement.classList.toggle("platform-mobile", isNativeAndroid);
+  document.documentElement.classList.toggle("platform-android", isNativeAndroid);
 }
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -128,6 +129,7 @@ const browserPlatform = {
   isMobile: false,
   minimize() {}, close() {}, setMode() {},
   exitApp() {},
+  setReadingMode: async () => {},
   getPosition: browserPosition,
   getState: async () => browserSnapshot(),
   updateSettings: async (patch) => {
@@ -342,6 +344,15 @@ const mobilePlatform = {
   isMobile: true,
   minimize() {}, close() {}, setMode() {},
   exitApp: () => CapacitorApp.exitApp(),
+  setReadingMode: async (active) => {
+    if (active) {
+      await StatusBar.hide().catch(() => {});
+      return;
+    }
+    await StatusBar.show().catch(() => {});
+    await StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+    await StatusBar.setBackgroundColor({ color: "#161a15" }).catch(() => {});
+  },
   getPosition: async () => {
     let permission = await Geolocation.checkPermissions().catch(() => ({ coarseLocation: "prompt", location: "prompt" }));
     if (permission.coarseLocation === "prompt" && permission.location === "prompt") {
@@ -452,6 +463,7 @@ const desktopPlatform = window.desktop ? {
   platform: "windows",
   isMobile: false,
   exitApp() {},
+  setReadingMode: async () => {},
   getPosition: browserPosition,
   getAppInfo: async () => ({ ...(await window.desktop.getAppInfo()), platform: "windows", mobile: false }),
 } : null;
