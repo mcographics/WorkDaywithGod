@@ -6,6 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [Android 1.0.1] - 2026-08-04
+
+### Changed
+
+- Redesigned the Android devotional header into a compact title area with a dedicated menu, giving the reflection substantially more vertical reading space.
+- Moved completion, favourite, full-chapter, text-size, auto-scroll, restart, adjacent-reading, Verse Card, and reading-settings actions into the devotional menu while keeping Today, Future, and History in the main navigation.
+- Added a full-screen devotional reading mode that hides surrounding navigation and controls until the reader exits.
+- Enlarged and realigned the Verse Card clock within the right side of the header, then increased the Work Day with God wordmark for clearer phone-sized presentation.
+- Refined Android spacing, touch targets, reader typography, safe-area behavior, and menu contrast across light and dark appearances.
+
+### Verified
+
+- Passed all 42 automated tests, the Vite production build, signed Android release assembly, APK zip-alignment verification, and APK signing-certificate verification.
+- Installed and visually checked the updated layout on a physical Samsung SM-G781W running Android 13.
+
 ## [Android 1.0.0] - 2026-08-03
 
 ### Added
@@ -247,7 +262,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/android-v1.0.0...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/android-v1.0.1...HEAD
+[Android 1.0.1]: https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.1
 [Android 1.0.0]: https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0
 [1.4.3]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.1a...v1.4.2
