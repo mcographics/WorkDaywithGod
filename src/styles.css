@@ -145,7 +145,7 @@ blockquote { width: 100%; margin: 18px 0 11px; font-family: Georgia, serif; font
 .mode-dark .reflection, .mode-dark .panel-view, .mode-dark .scripture-drawer { color: var(--text); }
 .mode-dark .reflection p, .mode-dark .panel-view p { color: var(--body-text); }
 
-/* Android uses the same visual language with a touch-first, edge-to-edge layout. */
+/* Native Android and iOS use the same visual language with a touch-first, edge-to-edge layout. */
 html.platform-mobile, html.platform-mobile body, html.platform-mobile #root {
   background: #161a15;
   overscroll-behavior: none;

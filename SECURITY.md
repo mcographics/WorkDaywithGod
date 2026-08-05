@@ -24,7 +24,7 @@ Use GitHub's private vulnerability-reporting form:
 Please include:
 
 - The affected Work Day with God version
-- Your Windows version
+- Your operating system, device model where applicable, and operating-system version
 - A clear description of the vulnerability
 - Detailed steps to reproduce the issue
 - The potential security impact
@@ -77,7 +77,7 @@ General software bugs, feature requests, devotional-content corrections, and usa
 
 ## Privacy
 
-Work Day with God is an offline-first application. Settings, favourites, reading history, completion records, and reminder information are stored locally on the user's computer.
+Work Day with God is an offline-first application. Settings, favourites, reading history, completion records, and reminder information are stored locally on the user's computer or mobile device.
 
 If a vulnerability report contains personal or sensitive information, it will be handled only as needed to investigate and resolve the report.
 

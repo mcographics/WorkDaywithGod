@@ -11,7 +11,7 @@ test("overnight quiet hours include evening and early morning", async () => {
   assert.equal(isInsideQuietHours(new Date(2026, 7, 4, 8, 0), quietHours), false);
 });
 
-test("specific Android reminders honor active days and quiet hours", async () => {
+test("specific mobile reminders honor active days and quiet hours", async () => {
   const { nextSpecificDates } = await reminders;
   const settings = {
     activeDays: [1],
@@ -23,7 +23,7 @@ test("specific Android reminders honor active days and quiet hours", async () =>
   assert.ok(dates.every((date) => date.getDay() === 1 && date.getHours() === 9));
 });
 
-test("interval Android reminders stay within active days and outside quiet hours", async () => {
+test("interval mobile reminders stay within active days and outside quiet hours", async () => {
   const { nextIntervalDates } = await reminders;
   const settings = {
     activeDays: [1, 2, 3, 4, 5],
@@ -38,7 +38,7 @@ test("interval Android reminders stay within active days and outside quiet hours
   assert.equal(dates[0].getDate(), 4);
 });
 
-test("Android reminder batches stay bounded for responsive state changes", async () => {
+test("mobile reminder candidates stay bounded for responsive state changes", async () => {
   const { nextIntervalDates, nextSpecificDates } = await reminders;
   const base = {
     activeDays: [0, 1, 2, 3, 4, 5, 6],
@@ -50,7 +50,13 @@ test("Android reminder batches stay bounded for responsive state changes", async
   assert.equal(nextIntervalDates(base, new Date(2026, 7, 3, 7, 0)).length, 128);
 });
 
-test("Android devotional notification types have distinct content and channels", async () => {
+test("native platforms use their operating-system pending notification limits", async () => {
+  const { mobileNotificationLimit } = await reminders;
+  assert.equal(mobileNotificationLimit("android"), 128);
+  assert.equal(mobileNotificationLimit("ios"), 64);
+});
+
+test("devotional notification types have distinct content and Android channels", async () => {
   const { reminderNotificationChannels, reminderNotificationDefinition } = await reminders;
   const daily = reminderNotificationDefinition("daily-reading", true);
   const later = reminderNotificationDefinition("remind-later", true);

@@ -271,6 +271,7 @@ function Toggle({ checked, onChange, label, description }) {
 }
 
 function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, onPatchState }) {
+  const mobileSystemName = platformName === "ios" ? "iOS" : "Android";
   const [message, setMessage] = useState("");
   const [appInfo, setAppInfo] = useState(null);
   const [updateStatus, setUpdateStatus] = useState(null);
@@ -356,8 +357,8 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
       </div>}
       <div className="settings-group"><h2>Gentle reminders</h2>
         <div className="setting-row"><div><h3>Notifications</h3><p>Master switch for all scheduled reminders.</p></div><Toggle label="Notifications" checked={settings.notificationsEnabled} onChange={(notificationsEnabled) => onPatchSettings({ notificationsEnabled })} /></div>
-        <div className="setting-row"><div><h3>Notification sound</h3><p>Allow {isMobilePlatform ? "Android" : "Windows"} to play its notification sound.</p></div><Toggle label="Notification sound" checked={settings.notificationSound} onChange={(notificationSound) => onPatchSettings({ notificationSound })} /></div>
-        {isMobilePlatform && <div className={`setting-row precise-reminders ${appInfo?.exactNotificationSupported ? "enabled" : ""}`}>
+        <div className="setting-row"><div><h3>Notification sound</h3><p>Allow {isMobilePlatform ? mobileSystemName : "Windows"} to play its notification sound.</p></div><Toggle label="Notification sound" checked={settings.notificationSound} onChange={(notificationSound) => onPatchSettings({ notificationSound })} /></div>
+        {platformName === "android" && <div className={`setting-row precise-reminders ${appInfo?.exactNotificationSupported ? "enabled" : ""}`}>
           <div><h3>Precise reminder timing</h3><p>{appInfo?.exactNotificationSupported ? "Allowed by Android. Fixed times and intervals are scheduled as precisely as the phone permits." : "Allow Alarms & reminders access so Android does not place broad delivery windows around your selected times."}</p></div>
           {appInfo?.exactNotificationSupported
             ? <span className="permission-status" role="status"><Check size={15} /> Enabled</span>
@@ -374,15 +375,15 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
         <label title="Set the snooze duration used by the Verse Card clock button" className="field-label"><span><strong>“Remind me later” duration</strong><small>Choose from 10 to 90 minutes in 10-minute increments.</small></span><select aria-label="Remind me later duration in minutes" value={settings.remindLaterMinutes} onChange={(event) => onPatchSettings({ remindLaterMinutes: Number(event.target.value) })}>{remindLaterOptions.map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}</select></label>
         {isMobilePlatform
           ? <div className="action-row notification-test-actions">
-            <button disabled={!settings.notificationsEnabled} title="Display a sample Daily reading notification" onClick={() => run(async () => { const result = await desktop.testNotification("daily-reading"); if (!result.supported) throw new Error("Android notifications are unavailable or not permitted."); return result; }, "Daily reading test sent.")}>Test daily reading</button>
-            <button disabled={!settings.notificationsEnabled} title="Display a sample Remind me later notification" onClick={() => run(async () => { const result = await desktop.testNotification("remind-later"); if (!result.supported) throw new Error("Android notifications are unavailable or not permitted."); return result; }, "Remind me later test sent.")}>Test remind me later</button>
-            <button disabled={!settings.notificationsEnabled} title="Display a sample Devotional timer notification" onClick={() => run(async () => { const result = await desktop.testNotification("devotional-timer"); if (!result.supported) throw new Error("Android notifications are unavailable or not permitted."); return result; }, "Devotional timer test sent.")}>Test devotional timer</button>
+            <button disabled={!settings.notificationsEnabled} title="Display a sample Daily reading notification" onClick={() => run(async () => { const result = await desktop.testNotification("daily-reading"); if (!result.supported) throw new Error(`${mobileSystemName} notifications are unavailable or not permitted.`); return result; }, "Daily reading test sent.")}>Test daily reading</button>
+            <button disabled={!settings.notificationsEnabled} title="Display a sample Remind me later notification" onClick={() => run(async () => { const result = await desktop.testNotification("remind-later"); if (!result.supported) throw new Error(`${mobileSystemName} notifications are unavailable or not permitted.`); return result; }, "Remind me later test sent.")}>Test remind me later</button>
+            <button disabled={!settings.notificationsEnabled} title="Display a sample Devotional timer notification" onClick={() => run(async () => { const result = await desktop.testNotification("devotional-timer"); if (!result.supported) throw new Error(`${mobileSystemName} notifications are unavailable or not permitted.`); return result; }, "Devotional timer test sent.")}>Test devotional timer</button>
           </div>
           : <div className="action-row"><button disabled={!settings.notificationsEnabled} title={settings.notificationsEnabled ? "Display a sample Windows notification using the current notification settings" : "Enable notifications before sending a test notification"} onClick={() => run(async () => { const result = await desktop.testNotification(); if (!result.supported) throw new Error("Windows notifications are unavailable or not permitted."); return result; }, "Test notification sent.")}>Send test notification</button></div>}
       </div>
       <div className="settings-group"><h2>Appearance & reading</h2>
         <div className="theme-options expanded">{["gold","blue","forest","burgundy","lavender","terracotta","sage","rose","teal","charcoal"].map((theme) => <button title={`Use the ${theme} accent colour throughout the app`} key={theme} className={settings.theme === theme ? "chosen" : ""} onClick={() => onPatchSettings({ theme })}><i className={theme} />{theme}</button>)}</div>
-        <label title={`Choose an automatic sunrise-to-sunset appearance, follow ${isMobilePlatform ? "Android" : "Windows"}, or use a fixed mode`} className="field-label"><span><strong>Colour mode</strong><small>Auto uses light mode from local sunrise to sunset, then switches to dark.</small></span><select aria-label="Colour mode" value={settings.colorMode} onChange={(event) => onPatchSettings({ colorMode: event.target.value })}><option value="auto">Auto · sunrise to sunset</option><option value="system">Follow {isMobilePlatform ? "Android" : "Windows"}</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+        <label title={`Choose an automatic sunrise-to-sunset appearance, follow ${isMobilePlatform ? mobileSystemName : "Windows"}, or use a fixed mode`} className="field-label"><span><strong>Colour mode</strong><small>Auto uses light mode from local sunrise to sunset, then switches to dark.</small></span><select aria-label="Colour mode" value={settings.colorMode} onChange={(event) => onPatchSettings({ colorMode: event.target.value })}><option value="auto">Auto · sunrise to sunset</option><option value="system">Follow {isMobilePlatform ? mobileSystemName : "Windows"}</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
         <label title="Choose the translation used when reading a complete Bible chapter" className="field-label"><span><strong>Bible translation</strong><small>Used in the full-chapter drawer; daily anchor quotations remain KJV.</small></span><select aria-label="Bible translation" value={settings.translation} onChange={(event) => onPatchSettings({ translation: event.target.value })}>{translations.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select></label>
         <label title="Adjust the size of devotional reflection paragraphs and questions" className="range-field"><span><strong>Devotional text size</strong><small>Changes the main reflection text, not the Verse Card or Scripture drawer.</small></span><input aria-label="Devotional text size" type="range" min=".8" max="1.4" step=".05" value={settings.fontScale} onChange={(event) => onPatchSettings({ fontScale: Number(event.target.value) })} /></label>
         <label title="Adjust the text size inside the full-chapter Scripture drawer" className="range-field"><span><strong>Scripture text size</strong><small>Changes Bible verses in the full-chapter reader.</small></span><input aria-label="Scripture text size" type="range" min=".8" max="1.4" step=".05" value={settings.scriptureFontScale} onChange={(event) => onPatchSettings({ scriptureFontScale: Number(event.target.value) })} /></label>
@@ -406,10 +407,10 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
         </div>
         <div className="action-row"><button disabled={checkingForUpdates || updateStatus?.checking} title="Check GitHub now for the latest public Work Day with God release" onClick={checkNow}>{checkingForUpdates || updateStatus?.checking ? "Checking…" : "Check now"}</button>{updateStatus?.updateAvailable && <button title={`Open the Work Day with God ${updateStatus.latestVersion} release on GitHub`} onClick={() => run(() => desktop.openUpdateRelease(), "Opened the latest release on GitHub.")}><ExternalLink size={12} />View update on GitHub</button>}</div>
       </div>}
-      {isMobilePlatform && <div className="settings-group"><h2>Android updates</h2><div className="update-status-card"><RefreshCw size={19} /><span><strong>Installed version {appInfo?.version || "unknown"}</strong><small>Updates can be installed from a new Work Day with God APK or delivered through Google Play.</small></span></div></div>}
+      {isMobilePlatform && <div className="settings-group"><h2>{mobileSystemName} updates</h2><div className="update-status-card"><RefreshCw size={19} /><span><strong>Installed version {appInfo?.version || "unknown"}</strong><small>{platformName === "ios" ? "Updates are delivered through TestFlight or the App Store." : "Updates can be installed from a new Work Day with God APK or delivered through Google Play."}</small></span></div></div>}
       <div className="settings-group"><h2>About</h2>
         <div className="about-settings">
-          <div className="about-settings-intro"><BookOpen size={25} /><div><h3>Work Day with God</h3><strong>Work. Faith. Purpose.</strong><p>Work Day with God is a completely free Christian devotional app for Windows and Android, created to bring Scripture, reflection, prayer, and peaceful encouragement into your daily work routine. It works offline, requires no account or subscription, and stores your settings and reading activity locally on your device.</p></div></div>
+          <div className="about-settings-intro"><BookOpen size={25} /><div><h3>Work Day with God</h3><strong>Work. Faith. Purpose.</strong><p>Work Day with God is a completely free Christian devotional app for Windows, Android, and iOS, created to bring Scripture, reflection, prayer, and peaceful encouragement into your daily work routine. It works offline, requires no account or subscription, and stores your settings and reading activity locally on your device.</p></div></div>
           <div className="about-settings-details">
             <div><UserRound size={18} /><span><small>Author / Developer</small><strong>Kenneth Salmon</strong><em>Creator and developer of Work Day with God.</em></span></div>
             <div><MessageCircle size={18} /><span><small>Discord support</small><button title="Join the Work Day with God support server on Discord" onClick={() => desktop.openSupportDiscord()}>discord.gg/2UvdpY4JSW</button><em>For support, feedback, or bug reports.</em></span></div>
@@ -426,18 +427,18 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
 function Reader({ catalogue, devotional, selectedDate, settings, appState, initialView, readingModeExitRequest, onReadingModeChange, onBack, onSelectDate, onPatchSettings, onPatchState, onSnooze }) {
   const [view, setView] = useState(initialView || "today");
   const [contentVisible, setContentVisible] = useState(true);
-  const contentTimers = useRef([]);
   const [readingMode, setReadingMode] = useState(false);
+  const contentTimers = useRef([]);
   const resolvedColourMode = useResolvedColourMode(settings.colorMode);
-  const navigateView = (nextView) => {
   const updateReadingMode = (active) => {
     setReadingMode(active);
     onReadingModeChange(active);
     desktop.setReadingMode(active);
   };
+  const navigateView = (nextView) => {
     if (nextView === view) return;
-    for (const timer of contentTimers.current) window.clearTimeout(timer);
     if (readingMode) updateReadingMode(false);
+    for (const timer of contentTimers.current) window.clearTimeout(timer);
     contentTimers.current = [];
     if (isMobilePlatform || settings.reducedMotion) {
       setContentVisible(true);
@@ -456,14 +457,14 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
     contentTimers.current = [swapTimer];
   };
   useEffect(() => setView(initialView || "today"), [initialView]);
-  useEffect(() => () => {
   useEffect(() => {
     if (readingMode) updateReadingMode(false);
   }, [readingModeExitRequest]);
+  useEffect(() => () => {
     for (const timer of contentTimers.current) window.clearTimeout(timer);
-  }, []);
     onReadingModeChange(false);
     desktop.setReadingMode(false);
+  }, []);
   useEffect(() => {
     if (settings.preventFutureDevotionals && (view === "future" || view === "future-reading")) {
       onSelectDate(new Date());
@@ -527,11 +528,11 @@ export default function App() {
   const [readerView, setReaderView] = useState("today");
   const [selectedDate, setSelectedDate] = useState(() => isoDate());
   const [startupError, setStartupError] = useState("");
-  const stateRevision = useRef(0);
   const [readingModeExitRequest, setReadingModeExitRequest] = useState(0);
+  const stateRevision = useRef(0);
   const modeRef = useRef(mode);
-  const reducedMotion = useRef(false);
   const readingModeRef = useRef(false);
+  const reducedMotion = useRef(false);
   const surfaceTimers = useRef([]);
   reducedMotion.current = Boolean(appState?.settings.reducedMotion);
   modeRef.current = mode;
@@ -584,12 +585,12 @@ export default function App() {
         return;
       }
       if (view === "back") {
-        if (modeRef.current === "card") {
         if (readingModeRef.current) {
           readingModeRef.current = false;
           setReadingModeExitRequest((request) => request + 1);
           return;
         }
+        if (modeRef.current === "card") {
           desktop.exitApp();
           return;
         }

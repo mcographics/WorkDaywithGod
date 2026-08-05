@@ -90,12 +90,12 @@ The installed application does not generate content with AI, connect to an AI se
 
 | Material | Repository location | Origin and development method | Evidence retained | Current classification |
 | --- | --- | --- | --- | --- |
-| Application code and interface | `src`, `electron`, `android`, `scripts` | Created specifically for Work Day with God through owner-directed, AI-assisted development | Git history, platform-specific release tags and branches, source files, tests, and build configuration | Project material, excluding third-party dependencies |
+| Application code and interface | `src`, `electron`, `android`, `ios`, `scripts` | Created specifically for Work Day with God through owner-directed, AI-assisted development | Git history, platform-specific release tags and branches, source files, tests, and build configuration | Project material, excluding third-party dependencies |
 | Devotional writing | `public/content/devotionals.json` | Original-to-project, AI-assisted drafts and reusable text components selected and approved by the project owner | Generation script and generated JSON | Project material; AI assistance disclosed |
 | Daily Scripture quotations | `public/content/devotionals.json` | Selected from the bundled KJV cache | Reference, translation label, and source cache | Historical third-party Scripture text; not claimed as original project writing |
 | Full-chapter Scripture libraries | `public/content/*.json` | Normalized from historical translation caches in `data/electron_cache` | Translation files and application allowlist | Per-translation and per-country rights verification still required |
 | Daily scenic artwork | `public/scenes` | Built from a project-specific library of AI-generated scenic sources, then cropped, resized, colour-adjusted, and optimized | Output manifest, source filename mapping, byte sizes, and SHA-256 hashes | AI-generated and project-processed material |
-| Branding and application icons | `icon.png`, `build/icon.*`, `android/app/src/main/res` | Developed specifically for Work Day with God through the same owner-directed, AI-assisted process; Android adaptive, splash, launcher, and notification variants were derived for the mobile release | Source image, deterministic desktop branding script, Android resources, and release history | Project branding; AI assistance disclosed |
+| Branding and application icons | `icon.png`, `build/icon.*`, `android/app/src/main/res`, `ios/App/App/Assets.xcassets` | Developed specifically for Work Day with God through the same owner-directed, AI-assisted process; Android and iOS launcher and splash variants were derived for their native targets | Source image, deterministic branding scripts, native platform resources, and release history | Project branding; AI assistance disclosed |
 | Software libraries and build tools | `package.json`, `package-lock.json` | Third-party open-source packages | Locked package names and versions | Governed by their respective licences |
 
 "Project material" in this document identifies material developed specifically for this application. It does not assert exclusive copyright over public-domain text, third-party components, or purely AI-generated elements.
@@ -162,7 +162,7 @@ The Work Day with God name, application concept, interface direction, wording, c
 
 `icon.png` is the source used by `scripts/generate-branding.cjs` to produce the installer and desktop icon formats. The generated `build/icon.png` and `build/icon.ico` files are format variants and do not have an independent origin.
 
-Windows 1.1.1 established deterministic desktop icon generation and publisher-specific application identity. Windows 1.4.1, 1.4.1a, and 1.4.3 changed taskbar icon resources, relaunch metadata, and AppUserModelID behavior without changing the documented creative origin of the underlying Work Day with God brand. Android 1.0.0 added adaptive launcher icons, splash resources, a notification status icon, and other platform-specific raster variants under `android/app/src/main/res`; those are treated as derived project branding rather than unrelated third-party artwork.
+Windows 1.1.1 established deterministic desktop icon generation and publisher-specific application identity. Windows 1.4.1, 1.4.1a, and 1.4.3 changed taskbar icon resources, relaunch metadata, and AppUserModelID behavior without changing the documented creative origin of the underlying Work Day with God brand. Android 1.0.0 added adaptive launcher icons, splash resources, a notification status icon, and other platform-specific raster variants under `android/app/src/main/res`. The unreleased iOS 1.0.0 development target adds an App Store icon and launch-screen images under `ios/App/App/Assets.xcassets`, generated deterministically by `scripts/generate-ios-assets.cjs`. These native resources are treated as derived project branding rather than unrelated third-party artwork.
 
 This provenance statement is not a trademark clearance search and does not establish trademark registration.
 
@@ -172,7 +172,7 @@ The application-specific source code was produced through the collaborative proc
 
 Dependency versions are release-specific. The `package-lock.json` stored at each release tag is the authoritative inventory for that source snapshot; the current lockfile must not be used to claim that an older installer contained identical transitive versions.
 
-The current source snapshot, representing the Windows 1.4.3 code line plus Android 1.0.0 additions, records these direct mobile runtime packages:
+The current source snapshot, representing the Windows 1.4.3 code line, Android 1.0.0 additions, and the unreleased iOS 1.0.0 development target, records these direct mobile runtime packages. The iOS target is not included in the published-release ledger until a signed build is actually distributed:
 
 | Package | Locked version | Licence reported by the installed package |
 | --- | ---: | --- |
@@ -182,6 +182,7 @@ The current source snapshot, representing the Windows 1.4.3 code line plus Andro
 | `@capacitor/core` | 8.5.0 | MIT |
 | `@capacitor/filesystem` | 8.1.2 | MIT |
 | `@capacitor/geolocation` | 8.2.0 | MIT |
+| `@capacitor/ios` | 8.5.0 | MIT |
 | `@capacitor/local-notifications` | 8.2.1 | MIT |
 | `@capacitor/preferences` | 8.0.1 | MIT |
 | `@capacitor/share` | 8.0.1 | MIT |
