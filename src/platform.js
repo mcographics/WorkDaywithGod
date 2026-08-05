@@ -10,6 +10,7 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 import {
   nextIntervalDates,
   nextSpecificDates,
+  mobileNotificationLimit,
   reminderNotificationChannels,
   reminderNotificationDefinition,
 } from "./mobile-reminders.mjs";
@@ -48,15 +49,20 @@ const TEST_NOTIFICATION_IDS = {
 };
 const LEGACY_SILENT_CHANNEL_ID = "wdwg-gentle-silent";
 const SUPPORT_URL = "https://discord.gg/2UvdpY4JSW";
-const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+const nativePlatformName = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : "";
+const isNativeAndroid = nativePlatformName === "android";
+const isNativeIos = nativePlatformName === "ios";
+const isNativeMobile = isNativeAndroid || isNativeIos;
+const mobileSystemName = isNativeIos ? "iOS" : "Android";
 
-export const isMobilePlatform = isNativeAndroid;
-export const platformName = isNativeAndroid ? "android" : (window.desktop ? "windows" : "browser");
+export const isMobilePlatform = isNativeMobile;
+export const platformName = isNativeMobile ? nativePlatformName : (window.desktop ? "windows" : "browser");
 
 if (typeof document !== "undefined") {
   document.documentElement.dataset.platform = platformName;
-  document.documentElement.classList.toggle("platform-mobile", isNativeAndroid);
+  document.documentElement.classList.toggle("platform-mobile", isNativeMobile);
   document.documentElement.classList.toggle("platform-android", isNativeAndroid);
+  document.documentElement.classList.toggle("platform-ios", isNativeIos);
 }
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -129,7 +135,6 @@ const browserPlatform = {
   isMobile: false,
   minimize() {}, close() {}, setMode() {},
   exitApp() {},
-  setReadingMode: async () => {},
   getPosition: browserPosition,
   getState: async () => browserSnapshot(),
   updateSettings: async (patch) => {
@@ -185,6 +190,7 @@ const browserPlatform = {
   checkForUpdates: async () => { throw new Error("Update checks are available in the Windows desktop app."); },
   openUpdateRelease: async () => false,
   openSupportDiscord: async () => window.open(SUPPORT_URL, "_blank", "noopener,noreferrer"),
+  setReadingMode: async () => {},
   onNavigate: emptyListeners, onOpenDate: emptyListeners, onStateChanged: emptyListeners, onUpdateStatus: emptyListeners,
 };
 
@@ -227,23 +233,26 @@ function queueMobileReschedule() {
     const snapshot = clone(mobileState || defaultState());
     mobileScheduleQueue = mobileScheduleQueue
       .then(() => rescheduleMobileNotifications(snapshot))
-      .catch((error) => console.error("Android reminders could not be refreshed.", error));
+      .catch((error) => console.error(`${mobileSystemName} reminders could not be refreshed.`, error));
   }, 120);
 }
 
 function notificationBase(settings, id, kind, extra = {}) {
   const definition = reminderNotificationDefinition(kind, settings.notificationSound);
-  return {
+  const notification = {
     id,
     title: definition.title,
     body: definition.body,
-    channelId: definition.channelId,
     autoCancel: true,
     extra: { view: definition.view, kind, ...extra },
   };
+  if (isNativeAndroid) notification.channelId = definition.channelId;
+  if (isNativeIos && settings.notificationSound) notification.sound = "";
+  return notification;
 }
 
 async function ensureNotificationChannels() {
+  if (!isNativeAndroid) return;
   await LocalNotifications.deleteChannel({ id: LEGACY_SILENT_CHANNEL_ID }).catch(() => {});
   for (const channel of reminderNotificationChannels()) {
     await LocalNotifications.createChannel(channel).catch(() => {});
@@ -257,6 +266,7 @@ async function notificationPermission(request = false) {
 }
 
 async function exactNotificationPermission() {
+  if (!isNativeAndroid) return false;
   const permission = await LocalNotifications.checkExactNotificationSetting().catch(() => ({ exact_alarm: "denied" }));
   return permission.exact_alarm === "granted";
 }
@@ -270,7 +280,7 @@ async function cancelManagedNotifications() {
 }
 
 async function rescheduleMobileNotifications(state, { requestPermission = false } = {}) {
-  if (!isNativeAndroid) return;
+  if (!isNativeMobile) return;
   await cancelManagedNotifications();
   const settings = state.settings;
   if (!settings.notificationsEnabled || !settings.activeDays.length) return;
@@ -278,6 +288,7 @@ async function rescheduleMobileNotifications(state, { requestPermission = false 
   await ensureNotificationChannels();
 
   const notifications = [];
+  const notificationLimit = mobileNotificationLimit(nativePlatformName);
   let id = NOTIFICATION_ID_START;
   if (Number(state.remindAt) > Date.now()) {
     notifications.push({
@@ -288,9 +299,10 @@ async function rescheduleMobileNotifications(state, { requestPermission = false 
 
   const schedulingStart = new Date(Math.max(Date.now(), Number(state.snoozeUntil) || 0));
   const dates = settings.reminderMode === "times"
-    ? nextSpecificDates(settings, schedulingStart)
-    : nextIntervalDates(settings, schedulingStart);
-  for (const at of dates.slice(0, NOTIFICATION_ID_END - id + 1)) {
+    ? nextSpecificDates(settings, schedulingStart, notificationLimit)
+    : nextIntervalDates(settings, schedulingStart, notificationLimit);
+  const availableSlots = Math.min(notificationLimit - notifications.length, NOTIFICATION_ID_END - id + 1);
+  for (const at of dates.slice(0, Math.max(0, availableSlots))) {
     const kind = settings.reminderMode === "times" ? "daily-reading" : "devotional-timer";
     notifications.push({
       ...notificationBase(settings, id++, kind),
@@ -320,8 +332,8 @@ function pickBackupFile() {
 async function initializeMobile() {
   if (mobileInitialized) return;
   mobileInitialized = true;
-  await StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-  await StatusBar.setBackgroundColor({ color: "#161a15" }).catch(() => {});
+  await StatusBar.setStyle({ style: isNativeIos ? Style.Light : Style.Dark }).catch(() => {});
+  if (isNativeAndroid) await StatusBar.setBackgroundColor({ color: "#161a15" }).catch(() => {});
   await ensureNotificationChannels();
   await LocalNotifications.addListener("localNotificationActionPerformed", ({ notification }) => {
     const date = notification?.extra?.date;
@@ -334,29 +346,32 @@ async function initializeMobile() {
       queueMobileReschedule();
     }
   });
-  await CapacitorApp.addListener("backButton", ({ canGoBack }) => {
-    if (!canGoBack) navigateListeners.forEach((listener) => listener("back"));
-  });
+  if (isNativeAndroid) {
+    await CapacitorApp.addListener("backButton", ({ canGoBack }) => {
+      if (!canGoBack) navigateListeners.forEach((listener) => listener("back"));
+    });
+  }
 }
 
 const mobilePlatform = {
-  platform: "android",
+  platform: nativePlatformName,
   isMobile: true,
   minimize() {}, close() {}, setMode() {},
-  exitApp: () => CapacitorApp.exitApp(),
+  exitApp: () => isNativeAndroid ? CapacitorApp.exitApp() : undefined,
   setReadingMode: async (active) => {
     if (active) {
       await StatusBar.hide().catch(() => {});
       return;
     }
     await StatusBar.show().catch(() => {});
-    await StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-    await StatusBar.setBackgroundColor({ color: "#161a15" }).catch(() => {});
+    await StatusBar.setStyle({ style: isNativeIos ? Style.Light : Style.Dark }).catch(() => {});
+    if (isNativeAndroid) await StatusBar.setBackgroundColor({ color: "#161a15" }).catch(() => {});
   },
   getPosition: async () => {
     let permission = await Geolocation.checkPermissions().catch(() => ({ coarseLocation: "prompt", location: "prompt" }));
-    if (permission.coarseLocation === "prompt" && permission.location === "prompt") {
-      permission = await Geolocation.requestPermissions({ permissions: ["coarseLocation"] });
+    const requestedPermission = isNativeAndroid ? "coarseLocation" : "location";
+    if (permission[requestedPermission] === "prompt") {
+      permission = await Geolocation.requestPermissions({ permissions: [requestedPermission] });
     }
     if (permission.coarseLocation !== "granted" && permission.location !== "granted") throw new Error("Location permission was not granted.");
     const { coords } = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, maximumAge: 24 * 60 * 60 * 1000, timeout: 5000 });
@@ -379,7 +394,7 @@ const mobilePlatform = {
     const next = { ...state, settings };
     if (!settings.activeDays.length) Object.assign(next, { remindAt: 0, snoozeUntil: 0 });
     if (patch.notificationsEnabled && !(await notificationPermission(true))) {
-      throw new Error("Android notification permission was not granted. Enable it in Android Settings to use reminders.");
+      throw new Error(`${mobileSystemName} notification permission was not granted. Enable it in system Settings to use reminders.`);
     }
     return writeMobileState(next);
   },
@@ -390,7 +405,7 @@ const mobilePlatform = {
     const state = await readMobileState();
     if (!state.settings.activeDays.length) throw new Error("Select at least one active reminder day first.");
     if (!state.settings.notificationsEnabled) throw new Error("Enable notifications before setting a reminder.");
-    if (!(await notificationPermission(true))) throw new Error("Android notification permission is required for reminders.");
+    if (!(await notificationPermission(true))) throw new Error(`${mobileSystemName} notification permission is required for reminders.`);
     const until = Math.max(Date.now() + 1_000, Number(remindAt) || 0);
     return writeMobileState({ ...state, remindAt: until, snoozeUntil: until });
   },
@@ -406,12 +421,13 @@ const mobilePlatform = {
     return { supported: true, kind };
   },
   requestExactNotificationPermission: async () => {
+    if (!isNativeAndroid) return { granted: false, supported: false };
     const permission = await LocalNotifications.changeExactNotificationSetting();
     const granted = permission.exact_alarm === "granted";
     if (granted) await rescheduleMobileNotifications(await readMobileState());
     return { granted };
   },
-  openDataFolder: async () => "Work Day with God keeps its data private inside Android app storage.",
+  openDataFolder: async () => `Work Day with God keeps its data private inside ${mobileSystemName} app storage.`,
   exportData: async () => {
     const state = await readMobileState();
     const filename = `work-day-with-god-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -444,12 +460,12 @@ const mobilePlatform = {
       build: info.build,
       notificationSupported: await notificationPermission(false),
       exactNotificationSupported: await exactNotificationPermission(),
-      platform: "android",
+      platform: nativePlatformName,
       mobile: true,
     };
   },
   getUpdateStatus: async () => ({ currentVersion: (await CapacitorApp.getInfo()).version, latestVersion: "", updateAvailable: false, checking: false, supported: false }),
-  checkForUpdates: async () => { throw new Error("Android updates are delivered with a new APK or through Google Play."); },
+  checkForUpdates: async () => { throw new Error(isNativeIos ? "iOS updates are delivered through TestFlight or the App Store." : "Android updates are delivered with a new APK or through Google Play."); },
   openUpdateRelease: async () => false,
   openSupportDiscord: async () => Browser.open({ url: SUPPORT_URL }),
   onNavigate: (listener) => { navigateListeners.add(listener); return () => navigateListeners.delete(listener); },
@@ -468,4 +484,4 @@ const desktopPlatform = window.desktop ? {
   getAppInfo: async () => ({ ...(await window.desktop.getAppInfo()), platform: "windows", mobile: false }),
 } : null;
 
-export const platform = desktopPlatform || (isNativeAndroid ? mobilePlatform : browserPlatform);
+export const platform = desktopPlatform || (isNativeMobile ? mobilePlatform : browserPlatform);

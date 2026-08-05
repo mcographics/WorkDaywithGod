@@ -31,7 +31,7 @@ export function reminderNotificationDefinition(kind, sound = false) {
   if (kind === "test") {
     return {
       title: "Work Day with God",
-      body: "Your gentle Android reminders are working.",
+      body: "Your gentle devotional reminders are working.",
       channelId: sound ? "wdwg-daily-reading" : "wdwg-daily-reading-silent",
       view: "today",
     };
@@ -44,6 +44,10 @@ export function reminderNotificationDefinition(kind, sound = false) {
     channelId: sound ? channelBase : `${channelBase}-silent`,
     view: definition.view,
   };
+}
+
+export function mobileNotificationLimit(platform) {
+  return platform === "ios" ? 64 : 128;
 }
 
 export function reminderNotificationChannels() {

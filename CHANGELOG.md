@@ -6,6 +6,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added the native Capacitor iOS project for iPhone and iPad, configured as iOS 1.0.0 with bundle identifier `com.mcographics.workdaywithgod`, iOS 15 minimum deployment, Swift Package Manager dependencies, branded App Store artwork, and a branded launch screen.
+- Added native iOS private preferences, backup sharing and import, optional location access for sunrise and sunset, secure external links, status-bar integration, lifecycle refresh, and safe-area behavior.
+- Added native iOS Daily reading, Remind me later, and Devotional timer notifications with distinct content, destinations, optional sound, quiet hours, active weekdays, and a platform-safe 64-notification pending limit.
+- Added `npm run ios:sync`, `npm run ios:assets`, and `npm run ios:open` workflows plus a complete macOS, Xcode, physical-device, signing, TestFlight, and App Store handoff guide.
+
+### Changed
+
+- Generalized the native mobile platform boundary so Android and iOS share the touch interface and local devotional behavior while Android-only notification channels, exact-alarm access, hardware-back handling, and APK updates remain isolated to Android.
+- Updated in-app platform wording, project documentation, dependency provenance, and security-report guidance for Windows, Android, and iOS without representing the unsigned iOS development target as a published release.
+
+### Verified
+
+- Passed all 43 automated tests and the Vite production build after adding iOS reminder limits and native-platform behavior.
+- Generated and synchronized the Capacitor iOS project with all eight native plugins through Swift Package Manager; final compilation, signing, simulator testing, and physical-iPhone notification testing remain macOS/Xcode-only release gates.
+
 ## [Android 1.0.1] - 2026-08-04
 
 ### Changed

@@ -2,20 +2,21 @@
 
 **A completely free daily devotional app for Christians.**
 
-Work Day with God is a peaceful Windows and Android companion created to help Christians pause, read Scripture, reflect, and pray throughout the working day.
+Work Day with God is a peaceful Windows, Android, and iOS companion created to help Christians pause, read Scripture, reflect, and pray throughout the working day.
 
 **[Download Windows 1.4.3](https://github.com/mcographics/WorkDaywithGod/releases/latest)** · **[Download Android 1.0.1](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.1)** · **[Linux 1.2.2 testing preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.2.2-linux-beta.1)** · **[Discord support](https://discord.gg/2UvdpY4JSW)** · **[Changelog](CHANGELOG.md)** · **[Security policy](SECURITY.md)**
 
-Each calendar day presents a Bible verse, an original devotional reflection, a practical question, a short prayer, and a scenic background. Gentle reminders can be scheduled around your day through Windows or native Android notifications.
+Each calendar day presents a Bible verse, an original devotional reflection, a practical question, a short prayer, and a scenic background. Gentle reminders can be scheduled around your day through Windows, native Android notifications, or native iOS notifications.
 
 There are no subscriptions, advertisements, accounts, or paid features. The app is completely free to download and use.
 
-## Current platform releases
+## Current platform status
 
 | Platform | Current version | Release status | Download | Source line |
 | --- | --- | --- | --- | --- |
 | Windows x64 | 1.4.3 | Stable | [Windows release](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.4.3) | [`main`](https://github.com/mcographics/WorkDaywithGod/tree/main) |
 | Android 7.0+ | 1.0.1 | Stable GitHub APK | [Android release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.1) | [`android-v1.0.1`](https://github.com/mcographics/WorkDaywithGod/tree/android-v1.0.1) |
+| iOS 15+ | 1.0.0 | Native project ready; not yet released | Requires Xcode signing | [`main`](https://github.com/mcographics/WorkDaywithGod/tree/main) |
 | Linux x64 | 1.2.2 | Testing prerelease | [Linux testing preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.2.2-linux-beta.1) | [`linux-v1.2.2-testing`](https://github.com/mcographics/WorkDaywithGod/tree/linux-v1.2.2-testing) |
 
 ## Application preview
@@ -59,7 +60,7 @@ The gallery below shows **Work Day with God 1.4.3 for Windows**. Phone screensho
 - Full Bible chapter reading in nine bundled translations
 - Custom reminder times or repeating reminder intervals
 - Editable active weekdays, quiet hours, snooze, and pause controls
-- Windows and native Android notifications that open the relevant devotional
+- Windows, native Android, and native iOS notifications that open the relevant devotional
 - Calendar history, completed readings, favourites, and streak tracking
 - Adjustable text size and reading controls
 - Automatic sunrise-to-sunset, system, light, and dark modes; colour themes; focus mode; and reduced motion
@@ -224,6 +225,15 @@ npm run android:release
 ```
 
 The Android build requires Android SDK Platform 36, Build-Tools 36.0.0, Node.js 22 or newer, and a supported JDK from version 17 through 24. The included PowerShell build helper discovers the standard Android SDK location and a local Temurin 21 installation. A signed release additionally requires the untracked signing-properties file described in the [Android guide](docs/ANDROID.md); private signing material must never be committed.
+
+Synchronize the iOS project after changing shared application code or branding:
+
+```bash
+npm run ios:sync
+npm run ios:open
+```
+
+The checked-in native iOS project uses Swift Package Manager, targets iOS 15 or newer, and is configured as iOS version 1.0.0 with bundle identifier `com.mcographics.workdaywithgod`. Building, simulator testing, device installation, signing, TestFlight, and App Store archiving require macOS with Xcode 26 or newer. See the [iOS guide](docs/IOS.md) for the complete handoff and release procedure.
 
 For experimental testing, Windows developers can create Linux x64 AppImage, DEB, and RPM packages through Docker Desktop’s Linux engine:
 
