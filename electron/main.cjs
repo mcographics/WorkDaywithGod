@@ -67,14 +67,32 @@ function todayId(date = new Date()) {
   return `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function configuredDisplayScale() {
+  const configured = String(store?.get().settings.displayScale || "system");
+  return configured === "system" ? 1 : Number(configured);
+}
+
+function scaledSize(size) {
+  const scale = configuredDisplayScale();
+  const configuredResolution = String(store?.get().settings.screenResolution || "system");
+  if (configuredResolution !== "system") {
+    const [width, height] = configuredResolution.split("x").map(Number);
+    // Resolution is an explicit window size. Keep it independent from the
+    // user's DPI preference so 1920x1080 always means 1920x1080.
+    return { width, height };
+  }
+  return { width: Math.round(size.width * scale), height: Math.round(size.height * scale) };
+}
+
 function placeBottomRight(window, size) {
+  const scaled = scaledSize(size);
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
   const { workArea } = display;
   window.setBounds({
-    width: size.width,
-    height: size.height,
-    x: workArea.x + workArea.width - size.width - 28,
-    y: workArea.y + workArea.height - size.height - 28,
+    width: scaled.width,
+    height: scaled.height,
+    x: workArea.x + workArea.width - scaled.width - 28,
+    y: workArea.y + workArea.height - scaled.height - 28,
   }, true);
 }
 
@@ -314,6 +332,12 @@ function registerIpc() {
     }
     if (Object.prototype.hasOwnProperty.call(patch, "launchAtLogin")) applyLoginSetting(state.settings.launchAtLogin);
     if (Object.prototype.hasOwnProperty.call(patch, "updateCheckFrequency")) setTimeout(runScheduledUpdateCheck, 0);
+    if ((Object.prototype.hasOwnProperty.call(patch, "displayScale") || Object.prototype.hasOwnProperty.call(patch, "screenResolution")) && mainWindow) {
+      const mode = mainWindow.isResizable() ? "reader" : "card";
+      const scale = configuredDisplayScale();
+      mainWindow.setMinimumSize(mode === "reader" ? Math.round(800 * scale) : Math.round(compactSize.width * scale), mode === "reader" ? Math.round(640 * scale) : Math.round(compactSize.height * scale));
+      placeBottomRight(mainWindow, mode === "reader" ? readerSize : compactSize);
+    }
     rebuildTray();
     return { ...state, scheduler: scheduler.status() };
   });
@@ -390,6 +414,17 @@ function registerIpc() {
     version: app.getVersion(),
     notificationSupported: Notification.isSupported(),
     userDataPath: app.getPath("userData"),
+    displays: process.platform === "win32"
+      ? screen.getAllDisplays().map((display, index) => ({
+        id: String(display.id),
+        name: `Display ${index + 1}`,
+        width: display.size.width,
+        height: display.size.height,
+        scaleFactor: display.scaleFactor,
+        workAreaWidth: display.workAreaSize.width,
+        workAreaHeight: display.workAreaSize.height,
+      }))
+      : [],
   }));
   handleTrusted("updates:get-status", () => updateStatus());
   handleTrusted("updates:check", () => checkForUpdates({ manual: true }));
@@ -404,7 +439,8 @@ function registerIpc() {
   onTrusted("window:set-mode", (mode) => {
     if (!mainWindow) return;
     const size = mode === "reader" ? readerSize : compactSize;
-    mainWindow.setMinimumSize(mode === "reader" ? 800 : compactSize.width, mode === "reader" ? 640 : compactSize.height);
+    const scale = configuredDisplayScale();
+    mainWindow.setMinimumSize(mode === "reader" ? Math.round(800 * scale) : Math.round(compactSize.width * scale), mode === "reader" ? Math.round(640 * scale) : Math.round(compactSize.height * scale));
     mainWindow.setResizable(mode === "reader");
     placeBottomRight(mainWindow, size);
   });

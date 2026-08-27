@@ -21,7 +21,7 @@ export const defaultSettings = {
   reminderTimes: ["09:00", "12:00", "15:00", "17:00"], intervalMinutes: 60,
   activeDays: [1, 2, 3, 4, 5], quietHours: { enabled: true, start: "18:00", end: "08:00" },
   theme: "gold", colorMode: "system", imageOverlay: 38, imageTransition: true,
-  focusMode: false, fontScale: 1, scriptureFontScale: 1, reducedMotion: false,
+  focusMode: false, fontScale: 1, cardFontScale: 1, scriptureFontScale: 1, displayScale: "system", screenResolution: "system", reducedMotion: false,
   autoScrollEnabled: true, autoScrollSpeed: 2, hoverPausesScroll: true,
   rememberReadingPosition: true, showReflectionPrompt: true, showPrayer: true, showAttribution: true,
   automaticDailyContent: true, automaticDailyImage: true, preventFutureDevotionals: false, showStreak: true,
@@ -85,6 +85,13 @@ function normalizeSettings(input = {}) {
     : [...defaultSettings.reminderTimes];
   merged.intervalMinutes = Math.round(clampNumber(merged.intervalMinutes, 60, 1, 120));
   merged.remindLaterMinutes = normalizeRemindLater(merged.remindLaterMinutes);
+  merged.cardFontScale = clampNumber(merged.cardFontScale, 1, 0.65, 1.4);
+  merged.displayScale = ["system", "0.65", "0.75", "0.85", "1", "1.15", "1.25", "1.5"].includes(String(merged.displayScale))
+    ? String(merged.displayScale)
+    : defaultSettings.displayScale;
+  merged.screenResolution = ["system", "1280x720", "1920x1080", "2560x1440", "3840x2160"].includes(String(merged.screenResolution))
+    ? String(merged.screenResolution)
+    : defaultSettings.screenResolution;
   merged.activeDays = Array.isArray(merged.activeDays)
     ? [...new Set(merged.activeDays.map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))].sort()
     : [...defaultSettings.activeDays];

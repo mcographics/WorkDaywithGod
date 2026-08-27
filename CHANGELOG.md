@@ -23,6 +23,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Passed all 43 automated tests and the Vite production build after adding iOS reminder limits and native-platform behavior.
 - Generated and synchronized the Capacitor iOS project with all eight native plugins through Swift Package Manager; final compilation, signing, simulator testing, and physical-iPhone notification testing remain macOS/Xcode-only release gates.
 
+## [1.4.4] - 2026-08-27
+
+### Added
+
+- Added PC display scaling controls from 65% through 150% and separate Verse Card text sizing controls.
+- Added responsive Verse Card typography and controls for compact windows and high-DPI displays.
+- Added PC window resolution choices for 720p, 1080p, 1440p, and 4K UHD, with centered Local and Jerusalem date/time information.
+
+### Verified
+
+- Passed the automated test suite and Vite production build for the Windows release.
+
 ## [Android 1.0.1] - 2026-08-04
 
 ### Changed

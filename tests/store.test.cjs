@@ -37,6 +37,9 @@ test("expanded settings and reading state persist", () => {
     scriptureFontScale: 1.25,
     imageOverlay: 55,
     remindLaterMinutes: 24,
+    displayScale: "1.25",
+    cardFontScale: 1.25,
+    screenResolution: "1920x1080",
   });
   store.patchState({ readingPositions: { "2026-07-30": 420 } });
   const state = new AppStore(directory).get();
@@ -44,6 +47,9 @@ test("expanded settings and reading state persist", () => {
   assert.equal(state.settings.colorMode, "auto");
   assert.equal(state.settings.theme, "teal");
   assert.equal(state.settings.scriptureFontScale, 1.25);
+  assert.equal(state.settings.displayScale, "1.25");
+  assert.equal(state.settings.cardFontScale, 1.25);
+  assert.equal(state.settings.screenResolution, "1920x1080");
   assert.equal(state.settings.imageOverlay, 55);
   assert.equal(state.settings.remindLaterMinutes, 20);
   assert.equal(state.readingPositions["2026-07-30"], 420);
@@ -95,12 +101,18 @@ test("invalid imported appearance, translation, booleans, and quiet hours recove
   const state = store.replace({ settings: {
     theme: "injected-theme",
     colorMode: "unknown",
+    displayScale: "999",
+    screenResolution: "5120x2880",
+    cardFontScale: 9,
     translation: "MISSING",
     notificationsEnabled: "yes",
     quietHours: { enabled: "yes", start: "99:00", end: "bad" },
   } });
   assert.equal(state.settings.theme, "gold");
   assert.equal(state.settings.colorMode, "system");
+  assert.equal(state.settings.displayScale, "system");
+  assert.equal(state.settings.screenResolution, "system");
+  assert.equal(state.settings.cardFontScale, 1.4);
   assert.equal(state.settings.translation, "KJV");
   assert.equal(state.settings.notificationsEnabled, true);
   assert.deepEqual(state.settings.quietHours, { enabled: true, start: "18:00", end: "08:00" });

@@ -29,6 +29,12 @@ function useResolvedColourMode(colourMode) {
 
 const intervalMinuteOptions = Array.from({ length: 120 }, (_, index) => index + 1);
 const remindLaterOptions = Array.from({ length: 9 }, (_, index) => (index + 1) * 10);
+const supportedScreenResolutions = [
+  ["1280 × 720", "720p"],
+  ["1920 × 1080", "1080p"],
+  ["2560 × 1440", "1440p"],
+  ["3840 × 2160", "4K UHD"],
+];
 const desktop = platform;
 
 function WindowControls() {
@@ -60,7 +66,7 @@ function HeaderClock() {
   </div>;
 }
 
-function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, settings }) {
+function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, onPatchSettings, settings }) {
   const [reminderMessage, setReminderMessage] = useState("");
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -77,7 +83,7 @@ function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, se
     setReminderMessage(`Reminder set for ${new Date(until).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`);
     window.setTimeout(() => setReminderMessage(""), 4000);
   };
-  return <main className={`compact-shell accent-${settings.theme} ${settings.focusMode ? "focus-mode" : ""} ${verseLengthClass}`}>
+  return <main className={`compact-shell accent-${settings.theme} ${settings.focusMode ? "focus-mode" : ""} ${verseLengthClass}`} style={{ "--card-font-scale": settings.cardFontScale }}>
     {!settings.focusMode && <div className={`photo-layer ${settings.imageTransition ? "" : "no-transition"}`} style={{ backgroundImage: `url("./scenes/${settings.automaticDailyImage ? devotional.image : "01-01.webp"}")` }} />}
     <div className="card-shade" style={{ "--overlay": settings.imageOverlay / 100 }} />
     <div className="drag-bar"><div className="brand-mark"><span>WORK DAY</span><em>with God</em></div><HeaderClock /><WindowControls /></div>
@@ -91,6 +97,8 @@ function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, se
       <div><span className="status-dot" /> {settings.showStreak && streak ? `${streak}-day reading streak` : "A quiet reminder for your day"}</div>
       <div className="footer-actions">
         <button title={favourite ? "Remove today from favourites" : "Save today to favourites"} className={favourite ? "active" : ""} onClick={onFavourite} aria-label="Favourite"><Heart size={17} fill={favourite ? "currentColor" : "none"} /></button>
+        <button title="Decrease Verse Card text size" aria-label="Decrease Verse Card text size" onClick={() => onPatchSettings({ cardFontScale: Math.max(.65, Number((settings.cardFontScale - .05).toFixed(2))) })}>A−</button>
+        <button title="Increase Verse Card text size" aria-label="Increase Verse Card text size" onClick={() => onPatchSettings({ cardFontScale: Math.min(1.4, Number((settings.cardFontScale + .05).toFixed(2))) })}>A+</button>
         <span className="timer-action" title={reminderTitle}><button disabled={!reminderAvailable} aria-label={reminderAvailable ? `Remind me in ${settings.remindLaterMinutes} minutes` : reminderTitle} onClick={scheduleReminder}><Clock3 size={17} /></button></span>
         <button title="Open application settings" aria-label="Settings" onClick={() => onRead("settings")}><SlidersHorizontal size={17} /></button>
       </div>
@@ -274,11 +282,12 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
   const mobileSystemName = platformName === "ios" ? "iOS" : "Android";
   const [message, setMessage] = useState("");
   const [appInfo, setAppInfo] = useState(null);
+  const [displayInfo, setDisplayInfo] = useState(null);
   const [updateStatus, setUpdateStatus] = useState(null);
   const [checkingForUpdates, setCheckingForUpdates] = useState(false);
   useEffect(() => {
     let active = true;
-    desktop.getAppInfo().then((info) => active && setAppInfo(info));
+    desktop.getAppInfo().then((info) => { if (!active) return; setAppInfo(info); setDisplayInfo(info.displays || []); });
     desktop.getUpdateStatus().then((status) => active && setUpdateStatus(status));
     const removeUpdateStatus = desktop.onUpdateStatus((status) => active && setUpdateStatus(status));
     return () => { active = false; removeUpdateStatus(); };
@@ -383,9 +392,13 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
       </div>
       <div className="settings-group"><h2>Appearance & reading</h2>
         <div className="theme-options expanded">{["gold","blue","forest","burgundy","lavender","terracotta","sage","rose","teal","charcoal"].map((theme) => <button title={`Use the ${theme} accent colour throughout the app`} key={theme} className={settings.theme === theme ? "chosen" : ""} onClick={() => onPatchSettings({ theme })}><i className={theme} />{theme}</button>)}</div>
+        {!isMobilePlatform && <label title="Scale the Verse Card and devotional reader window for your Windows display" className="field-label"><span><strong>PC display scaling</strong><small>Use Windows-native sizing or adjust the app window for a high-DPI monitor. Applies to the Verse Card and devotional reader.</small></span><select aria-label="PC display scaling" value={settings.displayScale} onChange={(event) => onPatchSettings({ displayScale: event.target.value })}><option value="system">Match Windows (recommended)</option><option value="0.65">65%</option><option value="0.75">75%</option><option value="0.85">85%</option><option value="1">100%</option><option value="1.15">115%</option><option value="1.25">125%</option><option value="1.5">150%</option></select></label>}
+        {!isMobilePlatform && <label title="Set the actual Electron window resolution used by the Verse Card and devotional reader" className="field-label"><span><strong>PC window resolution</strong><small>Changes the Electron window dimensions themselves. Auto keeps the current window layout; select a monitor resolution when you want the app to use that exact size.</small></span><select aria-label="PC window resolution" value={settings.screenResolution} onChange={(event) => onPatchSettings({ screenResolution: event.target.value })}><option value="system">Auto · current window layout</option>{supportedScreenResolutions.map(([resolution, label]) => <option key={resolution} value={resolution.replaceAll(" × ", "x")}>{resolution} · {label}</option>)}</select></label>}
+        {!isMobilePlatform && <div className="field-label display-resolution-list"><span><strong>PC screen resolutions</strong><small>Available app sizes are 720p, 1080p, 1440p, and 4K UHD. Connected Windows displays and their current DPI scale are shown below.</small></span><div className="resolution-list" aria-label="PC screen resolution list">{supportedScreenResolutions.map(([resolution, label]) => <span key={resolution}>{resolution} · {label}</span>)}{displayInfo?.length ? <>{displayInfo.map((display) => <span className="detected-resolution" key={display.id}>{display.name}: {display.width} × {display.height} · {Math.round(display.scaleFactor * 100)}% DPI</span>)}</> : <span className="detected-resolution">Connected display information unavailable</span>}</div></div>}
         <label title={`Choose an automatic sunrise-to-sunset appearance, follow ${isMobilePlatform ? mobileSystemName : "Windows"}, or use a fixed mode`} className="field-label"><span><strong>Colour mode</strong><small>Auto uses light mode from local sunrise to sunset, then switches to dark.</small></span><select aria-label="Colour mode" value={settings.colorMode} onChange={(event) => onPatchSettings({ colorMode: event.target.value })}><option value="auto">Auto · sunrise to sunset</option><option value="system">Follow {isMobilePlatform ? mobileSystemName : "Windows"}</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
         <label title="Choose the translation used when reading a complete Bible chapter" className="field-label"><span><strong>Bible translation</strong><small>Used in the full-chapter drawer; daily anchor quotations remain KJV.</small></span><select aria-label="Bible translation" value={settings.translation} onChange={(event) => onPatchSettings({ translation: event.target.value })}>{translations.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select></label>
         <label title="Adjust the size of devotional reflection paragraphs and questions" className="range-field"><span><strong>Devotional text size</strong><small>Changes the main reflection text, not the Verse Card or Scripture drawer.</small></span><input aria-label="Devotional text size" type="range" min=".8" max="1.4" step=".05" value={settings.fontScale} onChange={(event) => onPatchSettings({ fontScale: Number(event.target.value) })} /></label>
+        {!isMobilePlatform && <label title="Adjust the quotation size on the compact Verse Card" className="range-field"><span><strong>Verse Card text size</strong><small>Reduce this when using a smaller DPI scale or narrow window; increase it when the Verse Card has more room.</small></span><input aria-label="Verse Card text size" type="range" min=".65" max="1.4" step=".05" value={settings.cardFontScale} onChange={(event) => onPatchSettings({ cardFontScale: Number(event.target.value) })} /></label>}
         <label title="Adjust the text size inside the full-chapter Scripture drawer" className="range-field"><span><strong>Scripture text size</strong><small>Changes Bible verses in the full-chapter reader.</small></span><input aria-label="Scripture text size" type="range" min=".8" max="1.4" step=".05" value={settings.scriptureFontScale} onChange={(event) => onPatchSettings({ scriptureFontScale: Number(event.target.value) })} /></label>
         <label title="Choose how quickly automatic reading moves down the page" className="range-field"><span><strong>Auto-scroll speed</strong><small>Sets the movement speed used by the Auto-scroll button.</small></span><input aria-label="Auto-scroll speed" type="range" min="1" max="4" step="1" value={settings.autoScrollSpeed} onChange={(event) => onPatchSettings({ autoScrollSpeed: Number(event.target.value) })} /></label>
         {readingOptions.map(([key, label, description]) => <div className="setting-row compact" key={key}><div><h3>{label}</h3><p>{description}</p></div><Toggle label={label} description={description} checked={settings[key]} onChange={(value) => onPatchSettings({ [key]: value })} /></div>)}
@@ -685,7 +698,7 @@ export default function App() {
   return <div className={`app-surface ${surfaceVisible ? "surface-visible" : "surface-hidden"} ${appState.settings.reducedMotion ? "surface-no-motion" : ""}`}>
     {mode === "card"
       ? <Card devotional={devotional} favourite={favourite} streak={calculateStreak(appState.completions)} settings={appState.settings}
-        onRead={openReader} onSnooze={onRemindLater}
+        onRead={openReader} onSnooze={onRemindLater} onPatchSettings={patchSettings}
         onFavourite={() => patchState({ favourites: favourite ? appState.favourites.filter((id) => id !== devotional.id) : [...appState.favourites, devotional.id] })} />
       : <Reader catalogue={catalogue} devotional={devotional} selectedDate={selectedDate} settings={appState.settings} appState={appState}
         initialView={readerView} readingModeExitRequest={readingModeExitRequest} onReadingModeChange={(active) => { readingModeRef.current = active; }} onBack={closeReader} onSelectDate={(date) => setSelectedDate(isoDate(date))}

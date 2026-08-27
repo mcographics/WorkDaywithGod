@@ -33,7 +33,10 @@ const DEFAULT_SETTINGS = Object.freeze({
   imageTransition: true,
   focusMode: false,
   fontScale: 1,
+  cardFontScale: 1,
   scriptureFontScale: 1,
+  displayScale: "system",
+  screenResolution: "system",
   reducedMotion: false,
   autoScrollEnabled: true,
   autoScrollSpeed: 2,
@@ -79,7 +82,14 @@ function normalizeSettings(input = {}) {
   next.quietHours.start = validClock(next.quietHours.start) ? next.quietHours.start : DEFAULT_SETTINGS.quietHours.start;
   next.quietHours.end = validClock(next.quietHours.end) ? next.quietHours.end : DEFAULT_SETTINGS.quietHours.end;
   next.fontScale = Math.min(1.4, Math.max(0.8, Number(next.fontScale) || 1));
+  next.cardFontScale = Math.min(1.4, Math.max(0.65, Number(next.cardFontScale) || 1));
   next.scriptureFontScale = Math.min(1.4, Math.max(0.8, Number(next.scriptureFontScale) || 1));
+  next.displayScale = ["system", "0.65", "0.75", "0.85", "1", "1.15", "1.25", "1.5"].includes(String(next.displayScale))
+    ? String(next.displayScale)
+    : DEFAULT_SETTINGS.displayScale;
+  next.screenResolution = ["system", "1280x720", "1920x1080", "2560x1440", "3840x2160"].includes(String(next.screenResolution))
+    ? String(next.screenResolution)
+    : DEFAULT_SETTINGS.screenResolution;
   next.imageOverlay = Math.min(75, Math.max(10, Number(next.imageOverlay) || 38));
   next.remindLaterMinutes = Math.min(90, Math.max(10, Math.round((Number(next.remindLaterMinutes) || 60) / 10) * 10));
   next.autoScrollSpeed = Math.min(4, Math.max(1, Number(next.autoScrollSpeed) || 2));

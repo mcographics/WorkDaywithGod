@@ -84,6 +84,18 @@ test("content security policy blocks remote scripts and embedded objects", () =>
   assert.match(indexSource, /frame-src 'none'/);
 });
 
+test("PC display scaling is applied to both window modes", () => {
+  assert.match(mainSource, /function scaledSize\(size\)/);
+  assert.match(mainSource, /mainWindow\.isResizable\(\) \? "reader" : "card"/);
+  assert.match(mainSource, /configuredDisplayScale/);
+  assert.match(mainSource, /screenResolution/);
+  assert.match(mainSource, /return \{ width, height \};/);
+  assert.match(mainSource, /screen\.getAllDisplays\(\)/);
+  assert.match(mainSource, /scaleFactor: display\.scaleFactor/);
+  assert.match(fs.readFileSync(path.join(root, "src", "App.jsx"), "utf8"), /3840 × 2160/);
+  assert.doesNotMatch(fs.readFileSync(path.join(root, "src", "App.jsx"), "utf8"), /5120 × 2880/);
+});
+
 test("packager uses an explicit application-file allowlist", () => {
   assert.deepEqual(packageJson.build.files, [
     "dist/**/*",
