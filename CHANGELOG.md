@@ -34,6 +34,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Verified
 
 - Passed the automated test suite and Vite production build for the Windows release.
+- Linux AppImage, DEB, and RPM packages are published separately as the `v1.4.4-linux-beta.1` testing preview.
 
 ## [Android 1.0.1] - 2026-08-04
 
