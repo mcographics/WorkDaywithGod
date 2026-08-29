@@ -37,11 +37,11 @@ const supportedScreenResolutions = [
 ];
 const desktop = platform;
 
-function WindowControls() {
+function WindowControls({ closeToTray = true }) {
   if (isMobilePlatform) return null;
   return <div className="window-controls">
     <button title="Minimize the window to the taskbar" aria-label="Minimize" onClick={desktop.minimize}><Minus size={16} /></button>
-    <button title="Hide the app in the system tray while reminders continue" aria-label="Close to tray" onClick={desktop.close}><X size={16} /></button>
+    <button title={closeToTray ? "Hide the app in the system tray while reminders continue" : "Close Work Day with God completely"} aria-label={closeToTray ? "Close to tray" : "Close application"} onClick={desktop.close}><X size={16} /></button>
   </div>;
 }
 
@@ -86,7 +86,7 @@ function Card({ devotional, favourite, streak, onFavourite, onRead, onSnooze, on
   return <main className={`compact-shell accent-${settings.theme} ${settings.focusMode ? "focus-mode" : ""} ${verseLengthClass}`} style={{ "--card-font-scale": settings.cardFontScale }}>
     {!settings.focusMode && <div className={`photo-layer ${settings.imageTransition ? "" : "no-transition"}`} style={{ backgroundImage: `url("./scenes/${settings.automaticDailyImage ? devotional.image : "01-01.webp"}")` }} />}
     <div className="card-shade" style={{ "--overlay": settings.imageOverlay / 100 }} />
-    <div className="drag-bar"><div className="brand-mark"><span>WORK DAY</span><em>with God</em></div><HeaderClock /><WindowControls /></div>
+    <div className="drag-bar"><div className="brand-mark"><span>WORK DAY</span><em>with God</em></div><HeaderClock /><WindowControls closeToTray={settings.closeToTray} /></div>
     <section className="verse-card">
       <div className="eyebrow"><span className="eyebrow-line" />{greeting}</div>
       <blockquote>“{devotional.verse}”</blockquote>
@@ -410,6 +410,7 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
     <div className="settings-sections">
       {!isMobilePlatform && <div className="settings-group"><h2>Startup & tray</h2>
         <div className="setting-row"><div><h3>Launch at login</h3><p>Open today’s card when you sign in to Windows.</p></div><Toggle label="Launch at login" checked={settings.launchAtLogin} onChange={(launchAtLogin) => onPatchSettings({ launchAtLogin })} /></div>
+        <div className="setting-row"><div><h3>Close to tray</h3><p>Keep reminders running when you close the window instead of quitting the app.</p></div><Toggle label="Close to tray" description="Keep reminders running when you close the window instead of quitting the app." checked={settings.closeToTray} onChange={(closeToTray) => onPatchSettings({ closeToTray })} /></div>
         <div className="setting-row"><div><h3>Show card at startup</h3><p>Display today’s verse after Windows login.</p></div><Toggle label="Show card at startup" checked={settings.showStartupCard} onChange={(showStartupCard) => onPatchSettings({ showStartupCard })} /></div>
         <div className="setting-row"><div><h3>Start silently in tray</h3><p>Keep the startup card hidden while reminders remain active.</p></div><Toggle label="Start in tray" checked={settings.startInTray} onChange={(startInTray) => onPatchSettings({ startInTray })} /></div>
       </div>}
@@ -570,7 +571,7 @@ function Reader({ catalogue, devotional, selectedDate, settings, appState, initi
         {!settings.preventFutureDevotionals && <button title="Browse devotionals assigned to today and later dates" className={view === "future" || view === "future-reading" ? "selected" : ""} onClick={showFuture}><CalendarDays size={16} /> {isMobilePlatform ? "Future" : "Future Devotionals"}</button>}
         <button title="Browse devotional dates before today and review reading activity" className={view === "history" || view === "history-reading" ? "selected" : ""} onClick={showHistory}><History size={16} /> History</button>
         <button title="Configure reminders, appearance, reading behavior, and local data" className={`global-settings-nav ${view === "settings" ? "selected" : ""}`} onClick={() => navigateView("settings")}><Settings size={16} /> Settings</button>
-      </nav><WindowControls />
+      </nav><WindowControls closeToTray={settings.closeToTray} />
     </header>
     <div className={`reader-content ${contentVisible ? "content-visible" : "content-hidden"} ${settings.reducedMotion ? "content-no-motion" : ""}`}>
       {view === "today" && <ReadingView devotional={devotional} selectedDate={selectedDate} dateScope="today" settings={settings} appState={appState} readingMode={readingMode} onReadingModeChange={updateReadingMode} onBack={onBack} onSettings={() => navigateView("settings")} onPatchSettings={onPatchSettings} onPatchState={onPatchState} onToggleFavourite={toggleFavourite} onToggleComplete={toggleComplete} onSelectDate={onSelectDate} />}

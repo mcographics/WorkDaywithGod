@@ -3,7 +3,7 @@ const path = require("path");
 
 const STORE_VERSION = 2;
 const BOOLEAN_SETTINGS = [
-  "launchAtLogin", "showStartupCard", "startInTray", "notificationsEnabled", "notificationSound",
+  "launchAtLogin", "closeToTray", "showStartupCard", "startInTray", "notificationsEnabled", "notificationSound",
   "imageTransition", "focusMode", "reducedMotion", "autoScrollEnabled", "hoverPausesScroll",
   "rememberReadingPosition", "showReflectionPrompt", "showPrayer", "showAttribution",
   "automaticDailyContent", "automaticDailyImage", "preventFutureDevotionals", "showStreak",

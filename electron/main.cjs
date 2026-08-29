@@ -156,10 +156,14 @@ function createWindow() {
     }
   });
   mainWindow.on("close", (event) => {
-    if (!isQuitting) {
+    if (isQuitting) return;
+    if (store?.get().settings.closeToTray !== false) {
       event.preventDefault();
       mainWindow.hide();
+      return;
     }
+    isQuitting = true;
+    app.quit();
   });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https:\/\/(worldenglish\.bible|www\.biblegateway\.com)\//.test(url)) shell.openExternal(url);

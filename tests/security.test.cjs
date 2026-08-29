@@ -66,6 +66,18 @@ test("Windows update installation has visible actions, progress, and restart gui
   assert.match(stylesSource, /\.update-progress progress/);
 });
 
+test("Windows window controls expose predictable minimize and close behavior", () => {
+  assert.match(appSource, /title="Minimize the window to the taskbar"/);
+  assert.match(appSource, /closeToTray \? "Hide the app in the system tray while reminders continue"/);
+  assert.match(appSource, /aria-label=\{closeToTray \? "Close to tray" : "Close application"\}/);
+  assert.match(appSource, /<WindowControls closeToTray=\{settings\.closeToTray\} \/>/);
+  assert.match(appSource, /<h3>Close to tray<\/h3>/);
+  assert.match(mainSource, /store\?\.get\(\)\.settings\.closeToTray !== false/);
+  assert.match(mainSource, /isQuitting = true;\s*app\.quit\(\);/);
+  assert.match(preloadSource, /minimize: \(\) => ipcRenderer\.send\("window:minimize"\)/);
+  assert.match(preloadSource, /close: \(\) => ipcRenderer\.send\("window:close"\)/);
+});
+
 test("development startup uses a dedicated strict Vite port", () => {
   assert.match(mainSource, /http:\/\/127\.0\.0\.1:5183/);
   assert.match(packageJson.scripts.dev, /vite --host 127\.0\.0\.1 --port 5183 --strictPort/);
