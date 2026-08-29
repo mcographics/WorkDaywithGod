@@ -324,7 +324,9 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
     try {
       const status = await desktop.installUpdate();
       setUpdateStatus(status);
-      setMessage("Update downloaded. Work Day with God is restarting to finish installation.");
+      setMessage(status.alreadyLatest
+        ? `Version ${status.currentVersion} is already the latest release.`
+        : "Update downloaded. Work Day with God is restarting to finish installation.");
     } catch (error) { setMessage(error.message); }
   };
   const requestPreciseReminders = async () => {
@@ -345,8 +347,11 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
       ? new Date(updateStatus.nextCheckAt).toLocaleString()
       : `Checks will run ${settings.updateCheckFrequency}`;
   const installPhase = updateStatus?.installPhase || "idle";
-  const installBusy = ["preparing", "downloading", "downloaded", "installing"].includes(installPhase);
+  const installChecking = installPhase === "checking";
+  const installBusy = ["checking", "preparing", "downloading", "downloaded", "installing"].includes(installPhase);
   const downloadPercent = Math.max(0, Math.min(100, Number(updateStatus?.downloadPercent) || 0));
+  const progressIndeterminate = installPhase === "checking" || installPhase === "preparing";
+  const visibleProgress = installPhase === "downloaded" || installPhase === "installing" ? 100 : downloadPercent;
   const formatBytes = (bytes) => {
     const value = Math.max(0, Number(bytes) || 0);
     if (value < 1024) return `${Math.round(value)} B`;
@@ -356,7 +361,9 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
   };
   const updateHeadline = checkingForUpdates || updateStatus?.checking
     ? "Checking GitHub…"
-    : installPhase === "preparing"
+    : installPhase === "checking"
+      ? "Checking GitHub for the latest release…"
+      : installPhase === "preparing"
       ? "Preparing the latest release…"
       : installPhase === "downloading"
         ? `Downloading version ${updateStatus?.latestVersion || "update"}…`
@@ -371,7 +378,9 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
                 : "Your update status";
   const progressDetail = installPhase === "downloading" && updateStatus?.total
     ? `${formatBytes(updateStatus.transferred)} of ${formatBytes(updateStatus.total)}${updateStatus.bytesPerSecond ? ` · ${formatBytes(updateStatus.bytesPerSecond)}/s` : ""}`
-    : installPhase === "preparing"
+    : installPhase === "checking"
+      ? "Checking GitHub’s public Windows release information."
+      : installPhase === "preparing"
       ? "Confirming the Windows installer and update metadata on GitHub."
       : installPhase === "downloaded"
         ? "Download complete. Installation will begin now."
@@ -455,11 +464,11 @@ function SettingsView({ settings, appState, onBack, onPatchSettings, onSnooze, o
       {!isMobilePlatform && <div className="settings-group"><h2>Updates</h2>
         <label title="Choose how often Work Day with God checks GitHub for a newer public release" className="field-label"><span><strong>Check for updates</strong><small>Uses GitHub’s public release information. No account, sign-in, or background service is required.</small></span><select aria-label="Automatic update check frequency" value={settings.updateCheckFrequency} onChange={(event) => updateFrequency(event.target.value)}><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="never">Never</option></select></label>
         <div className={`update-status-card ${updateStatus?.updateAvailable ? "available" : ""}`} role="status">
-          {installBusy ? <Download size={19} className={installPhase === "downloading" ? "downloading" : ""} /> : <RefreshCw size={19} className={checkingForUpdates || updateStatus?.checking ? "checking" : ""} />}
-          <div className="update-status-content"><strong>{updateHeadline}</strong><small>Installed: {updateStatus?.currentVersion || appInfo?.version || "unknown"} · Last checked: {lastUpdateCheck}</small><small>{nextUpdateCheck}</small>{installBusy && <div className="update-progress"><div><span>{installPhase === "downloading" ? "Download progress" : installPhase === "installing" ? "Installation progress" : "Update progress"}</span><strong>{Math.round(downloadPercent)}%</strong></div><progress aria-label="Windows update download progress" max="100" value={downloadPercent} /><small>{progressDetail}</small></div>}{updateStatus?.error && <em>{updateStatus.error}</em>}</div>
+          {installChecking || checkingForUpdates || updateStatus?.checking ? <RefreshCw size={19} className="checking" /> : installBusy ? <Download size={19} className={installPhase === "downloading" ? "downloading" : ""} /> : <RefreshCw size={19} />}
+          <div className="update-status-content"><strong>{updateHeadline}</strong><small>Installed: {updateStatus?.currentVersion || appInfo?.version || "unknown"} · Last checked: {lastUpdateCheck}</small><small>{nextUpdateCheck}</small>{installBusy && <div className="update-progress"><div><span>{installPhase === "checking" ? "Latest release check" : installPhase === "downloading" ? "Download progress" : installPhase === "installing" ? "Installation progress" : "Update progress"}</span><strong>{progressIndeterminate ? "Working…" : `${Math.round(visibleProgress)}%`}</strong></div><progress aria-label="Windows update progress" max="100" value={progressIndeterminate ? undefined : visibleProgress} /><small>{progressDetail}</small></div>}{updateStatus?.error && <em>{updateStatus.error}</em>}</div>
         </div>
-        <div className="action-row"><button disabled={checkingForUpdates || updateStatus?.checking || installBusy} title="Check GitHub now for the latest public Work Day with God release" onClick={checkNow}>{checkingForUpdates || updateStatus?.checking ? "Checking…" : "Check now"}</button>{updateStatus?.updateAvailable && updateStatus?.installSupported && <button className="install-update-button" disabled={installBusy} title={`Download and install Work Day with God ${updateStatus.latestVersion}`} onClick={installUpdate}><Download size={12} />{installBusy ? "Installing…" : "Install Now"}</button>}{updateStatus?.updateAvailable && <button disabled={installPhase === "installing"} title={`Open the Work Day with God ${updateStatus.latestVersion} release on GitHub`} onClick={() => run(() => desktop.openUpdateRelease(), "Opened the latest release on GitHub.")}><ExternalLink size={12} />View on GitHub</button>}</div>
-        {updateStatus?.updateAvailable && updateStatus?.installSupported && <p className="update-restart-note">Install Now downloads the verified Windows release, closes Work Day with God, installs it, and relaunches the new version automatically.</p>}
+        <div className="action-row"><button disabled={checkingForUpdates || updateStatus?.checking || installBusy} title="Check GitHub now for the latest public Work Day with God release" onClick={checkNow}>{checkingForUpdates || updateStatus?.checking ? "Checking…" : "Check now"}</button>{updateStatus?.installSupported && <button className="install-update-button" disabled={installBusy || checkingForUpdates || updateStatus?.checking} title={updateStatus?.updateAvailable ? `Download and install Work Day with God ${updateStatus.latestVersion}` : "Check GitHub and install the latest Work Day with God release"} onClick={installUpdate}><Download size={12} />{installChecking ? "Checking latest…" : installBusy ? "Installing…" : "Install latest"}</button>}<button disabled={installPhase === "installing"} title="Open the latest Work Day with God release on GitHub" onClick={() => run(() => desktop.openUpdateRelease(), "Opened the latest release on GitHub.")}><ExternalLink size={12} />View on GitHub</button></div>
+        {updateStatus?.installSupported && <p className="update-restart-note">Install latest checks GitHub, downloads a verified newer Windows release when available, shows its progress, closes Work Day with God, installs it silently, and relaunches the new version automatically.</p>}
       </div>}
       {isMobilePlatform && <div className="settings-group"><h2>{mobileSystemName} updates</h2><div className="update-status-card"><RefreshCw size={19} /><span><strong>Installed version {appInfo?.version || "unknown"}</strong><small>{platformName === "ios" ? "Updates are delivered through TestFlight or the App Store." : "Updates can be installed from a new Work Day with God APK or delivered through Google Play."}</small></span></div></div>}
       <div className="settings-group"><h2>About</h2>

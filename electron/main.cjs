@@ -333,31 +333,38 @@ function configureAutoUpdater() {
     clearTimeout(updateRestartTimer);
     updateRestartTimer = setTimeout(() => {
       setUpdateInstallState({ phase: "installing", percent: 100, error: "" });
-      isQuitting = true;
-      autoUpdater.quitAndInstall(true, true);
-    }, 750);
+      updateRestartTimer = setTimeout(() => {
+        isQuitting = true;
+        autoUpdater.quitAndInstall(true, true);
+      }, 1_000);
+    }, 500);
   });
   autoUpdater.on("error", (error) => {
     setUpdateInstallState({ phase: "error", error: updateInstallerError(error) });
   });
 }
 
-async function installAvailableUpdate() {
+async function installLatestRelease() {
   const status = updateStatus();
   if (!status.installSupported) throw new Error("Automatic installation is available in the packaged Windows app.");
-  if (!status.updateAvailable) throw new Error("No newer release is available to install.");
   if (updateInstallInFlight) return updateInstallInFlight;
 
   const operation = (async () => {
     try {
       setUpdateInstallState({
-        phase: "preparing",
+        phase: "checking",
         percent: 0,
         bytesPerSecond: 0,
         transferred: 0,
         total: 0,
         error: "",
       });
+      const latestStatus = await checkForUpdates({ manual: true });
+      if (!latestStatus.updateAvailable) {
+        setUpdateInstallState({ phase: "idle", percent: 0, error: "" });
+        return { ...updateStatus(), alreadyLatest: true };
+      }
+      setUpdateInstallState({ phase: "preparing", percent: 0, error: "" });
       const result = await autoUpdater.checkForUpdates();
       const availableVersion = normalizeReleaseTag(result?.updateInfo?.version);
       if (!availableVersion || compareVersions(availableVersion, app.getVersion()) <= 0) {
@@ -526,11 +533,10 @@ function registerIpc() {
   }));
   handleTrusted("updates:get-status", () => updateStatus());
   handleTrusted("updates:check", () => checkForUpdates({ manual: true }));
-  handleTrusted("updates:install", () => installAvailableUpdate());
+  handleTrusted("updates:install", () => installLatestRelease());
   handleTrusted("updates:open-release", () => {
     const status = updateStatus();
-    if (!status.updateAvailable || !status.releaseUrl) throw new Error("No newer release is available.");
-    return shell.openExternal(status.releaseUrl);
+    return shell.openExternal(status.releaseUrl || "https://github.com/mcographics/WorkDaywithGod/releases/latest");
   });
   handleTrusted("support:discord", () => shell.openExternal("https://discord.gg/2UvdpY4JSW"));
   onTrusted("window:minimize", () => mainWindow?.minimize());

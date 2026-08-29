@@ -55,10 +55,14 @@ test("update checks keep networking and release navigation in the trusted main p
 });
 
 test("Windows update installation has visible actions, progress, and restart guidance", () => {
-  assert.match(appSource, /"Install Now"/);
+  assert.match(appSource, /"Install latest"/);
+  assert.match(appSource, /updateStatus\?\.installSupported && <button className="install-update-button"/);
+  assert.match(appSource, /status\.alreadyLatest/);
   assert.match(appSource, />View on GitHub</);
-  assert.match(appSource, /<progress aria-label="Windows update download progress"/);
-  assert.match(appSource, /closes Work Day with God, installs it, and relaunches the new version automatically/);
+  assert.match(appSource, /<progress aria-label="Windows update progress"/);
+  assert.match(appSource, /shows its progress, closes Work Day with God, installs it silently, and relaunches the new version automatically/);
+  assert.match(mainSource, /phase: "checking"/);
+  assert.match(mainSource, /alreadyLatest: true/);
   assert.match(stylesSource, /\.update-progress progress/);
 });
 
