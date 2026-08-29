@@ -193,8 +193,9 @@ const browserPlatform = {
     return browserSnapshot();
   },
   getAppInfo: async () => ({ version: "1.4.3", notificationSupported: false, exactNotificationSupported: false, platform: "browser", mobile: false }),
-  getUpdateStatus: async () => ({ currentVersion: "1.4.3", latestVersion: "", updateAvailable: false, checking: false, supported: false }),
+  getUpdateStatus: async () => ({ currentVersion: "1.4.3", latestVersion: "", updateAvailable: false, checking: false, installSupported: false, installPhase: "idle", downloadPercent: 0 }),
   checkForUpdates: async () => { throw new Error("Update checks are available in the Windows desktop app."); },
+  installUpdate: async () => { throw new Error("Automatic installation is available in the packaged Windows app."); },
   openUpdateRelease: async () => false,
   openSupportDiscord: async () => window.open(SUPPORT_URL, "_blank", "noopener,noreferrer"),
   setReadingMode: async () => {},
@@ -471,8 +472,9 @@ const mobilePlatform = {
       mobile: true,
     };
   },
-  getUpdateStatus: async () => ({ currentVersion: (await CapacitorApp.getInfo()).version, latestVersion: "", updateAvailable: false, checking: false, supported: false }),
+  getUpdateStatus: async () => ({ currentVersion: (await CapacitorApp.getInfo()).version, latestVersion: "", updateAvailable: false, checking: false, installSupported: false, installPhase: "idle", downloadPercent: 0 }),
   checkForUpdates: async () => { throw new Error(isNativeIos ? "iOS updates are delivered through TestFlight or the App Store." : "Android updates are delivered with a new APK or through Google Play."); },
+  installUpdate: async () => { throw new Error(isNativeIos ? "Install updates through TestFlight or the App Store." : "Install updates from a new APK or through Google Play."); },
   openUpdateRelease: async () => false,
   openSupportDiscord: async () => Browser.open({ url: SUPPORT_URL }),
   onNavigate: (listener) => { navigateListeners.add(listener); return () => navigateListeners.delete(listener); },

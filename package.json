@@ -1,6 +1,6 @@
 {
   "name": "work-day-with-god",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "private": true,
   "author": "Work Day with God",
   "description": "A free offline devotional companion for Windows, Android, and iOS.",
@@ -79,6 +79,13 @@
       "deleteAppDataOnUninstall": false,
       "runAfterFinish": true
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "mcographics",
+        "repo": "WorkDaywithGod"
+      }
+    ],
     "linux": {
       "target": [
         "AppImage",
@@ -136,6 +143,7 @@
     "@capacitor/local-notifications": "^8.2.1",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/share": "^8.0.1",
-    "@capacitor/status-bar": "^8.0.3"
+    "@capacitor/status-bar": "^8.0.3",
+    "electron-updater": "6.8.9"
   }
 }

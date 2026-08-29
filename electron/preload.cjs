@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld("desktop", Object.freeze({
   getAppInfo: () => ipcRenderer.invoke("app:info"),
   getUpdateStatus: () => ipcRenderer.invoke("updates:get-status"),
   checkForUpdates: () => ipcRenderer.invoke("updates:check"),
+  installUpdate: () => ipcRenderer.invoke("updates:install"),
   openUpdateRelease: () => ipcRenderer.invoke("updates:open-release"),
   openSupportDiscord: () => ipcRenderer.invoke("support:discord"),
   onNavigate: (callback) => {

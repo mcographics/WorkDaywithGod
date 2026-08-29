@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, screen, Tray, Menu, Notification, nativeImage, shell, dialog, net } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
 const path = require("path");
 const { AppStore } = require("./store.cjs");
@@ -20,6 +21,16 @@ let updateStartupTimer;
 let updateEvaluationTimer;
 let updateLastAttemptAt = 0;
 let updateLastError = "";
+let updateInstallInFlight;
+let updateRestartTimer;
+let updateInstallState = {
+  phase: "idle",
+  percent: 0,
+  bytesPerSecond: 0,
+  transferred: 0,
+  total: 0,
+  error: "",
+};
 let isQuitting = false;
 let devotionalCatalogue = [];
 
@@ -228,7 +239,13 @@ function updateStatus() {
     nextCheckAt: nextCheckAt(state.settings.updateCheckFrequency, state.updateLastCheckedAt),
     frequency: state.settings.updateCheckFrequency,
     checking: Boolean(updateCheckInFlight),
-    error: updateLastError,
+    installSupported: app.isPackaged && process.platform === "win32",
+    installPhase: updateInstallState.phase,
+    downloadPercent: updateInstallState.percent,
+    bytesPerSecond: updateInstallState.bytesPerSecond,
+    transferred: updateInstallState.transferred,
+    total: updateInstallState.total,
+    error: updateInstallState.error || updateLastError,
   };
 }
 
@@ -277,6 +294,87 @@ async function checkForUpdates({ manual = false } = {}) {
   updateCheckInFlight = operation;
   updateLastError = "";
   sendUpdateStatus();
+  return operation;
+}
+
+function updateInstallerError(error) {
+  const message = String(error?.message || "Unable to download and install the update.");
+  if (/latest\.yml|cannot find.*release|404/i.test(message)) {
+    return "This GitHub release is missing its automatic-update file. Use View on GitHub for this release.";
+  }
+  if (/sha512|checksum|signature/i.test(message)) {
+    return "The downloaded update could not be verified, so it was not installed.";
+  }
+  return message;
+}
+
+function setUpdateInstallState(patch) {
+  updateInstallState = { ...updateInstallState, ...patch };
+  sendUpdateStatus();
+}
+
+function configureAutoUpdater() {
+  if (!app.isPackaged || process.platform !== "win32") return;
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = false;
+  autoUpdater.allowPrerelease = false;
+  autoUpdater.on("download-progress", (progress) => {
+    setUpdateInstallState({
+      phase: "downloading",
+      percent: Math.max(0, Math.min(100, Number(progress?.percent) || 0)),
+      bytesPerSecond: Math.max(0, Number(progress?.bytesPerSecond) || 0),
+      transferred: Math.max(0, Number(progress?.transferred) || 0),
+      total: Math.max(0, Number(progress?.total) || 0),
+      error: "",
+    });
+  });
+  autoUpdater.on("update-downloaded", () => {
+    setUpdateInstallState({ phase: "downloaded", percent: 100, error: "" });
+    clearTimeout(updateRestartTimer);
+    updateRestartTimer = setTimeout(() => {
+      setUpdateInstallState({ phase: "installing", percent: 100, error: "" });
+      isQuitting = true;
+      autoUpdater.quitAndInstall(true, true);
+    }, 750);
+  });
+  autoUpdater.on("error", (error) => {
+    setUpdateInstallState({ phase: "error", error: updateInstallerError(error) });
+  });
+}
+
+async function installAvailableUpdate() {
+  const status = updateStatus();
+  if (!status.installSupported) throw new Error("Automatic installation is available in the packaged Windows app.");
+  if (!status.updateAvailable) throw new Error("No newer release is available to install.");
+  if (updateInstallInFlight) return updateInstallInFlight;
+
+  const operation = (async () => {
+    try {
+      setUpdateInstallState({
+        phase: "preparing",
+        percent: 0,
+        bytesPerSecond: 0,
+        transferred: 0,
+        total: 0,
+        error: "",
+      });
+      const result = await autoUpdater.checkForUpdates();
+      const availableVersion = normalizeReleaseTag(result?.updateInfo?.version);
+      if (!availableVersion || compareVersions(availableVersion, app.getVersion()) <= 0) {
+        throw new Error("GitHub did not return a newer installable Windows release.");
+      }
+      setUpdateInstallState({ phase: "downloading", error: "" });
+      await autoUpdater.downloadUpdate();
+      return updateStatus();
+    } catch (error) {
+      const friendlyError = updateInstallerError(error);
+      setUpdateInstallState({ phase: "error", error: friendlyError });
+      throw new Error(friendlyError);
+    } finally {
+      if (updateInstallInFlight === operation) updateInstallInFlight = null;
+    }
+  })();
+  updateInstallInFlight = operation;
   return operation;
 }
 
@@ -428,6 +526,7 @@ function registerIpc() {
   }));
   handleTrusted("updates:get-status", () => updateStatus());
   handleTrusted("updates:check", () => checkForUpdates({ manual: true }));
+  handleTrusted("updates:install", () => installAvailableUpdate());
   handleTrusted("updates:open-release", () => {
     const status = updateStatus();
     if (!status.updateAvailable || !status.releaseUrl) throw new Error("No newer release is available.");
@@ -457,6 +556,7 @@ app.whenReady().then(() => {
   } catch {}
   registerIpc();
   createWindow();
+  configureAutoUpdater();
   scheduler = new ReminderScheduler({ store, notify });
   scheduler.start();
   createTray();
@@ -478,5 +578,6 @@ app.on("before-quit", () => {
   scheduler?.stop();
   clearTimeout(updateStartupTimer);
   clearInterval(updateEvaluationTimer);
+  clearTimeout(updateRestartTimer);
 });
 app.on("window-all-closed", () => {});

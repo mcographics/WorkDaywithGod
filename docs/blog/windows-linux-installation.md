@@ -1,6 +1,6 @@
 # Installing Work Day with God on Windows and Linux
 
-Windows users can download `Work-Day-with-God-Setup-1.4.4.exe` from the [Windows 1.4.4 release](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.4.4). Confirm the official source and compare the SHA-256 checksum before running the unsigned installer.
+Windows users can download `Work-Day-with-God-Setup-1.4.5.exe` from the [Windows 1.4.5 release](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.4.5). Confirm the official source and compare the SHA-256 checksum before running the unsigned installer. Starting with this release, future Windows updates can be checked, downloaded with visible progress, installed, and relaunched from Settings when the GitHub release includes the installer, blockmap, and `latest.yml` together.
 
 Linux users can choose the AppImage, DEB, or RPM package from the [Linux 1.4.4 testing preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.4.4-linux-beta.1). The AppImage may need execute permission. Debian-based systems can install the DEB with `sudo apt install ./package.deb`; RPM-based systems can use `sudo dnf install ./package.rpm`.
 

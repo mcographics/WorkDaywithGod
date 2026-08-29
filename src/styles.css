@@ -796,13 +796,26 @@ html.platform-mobile, html.platform-mobile body, html.platform-mobile #root {
 .update-status-card > svg { flex:0 0 auto; margin-top:2px; color:var(--accent); }
 .update-status-card > svg.checking { animation:update-spin 1s linear infinite; }
 .surface-no-motion .update-status-card > svg.checking { animation:none; }
-.update-status-card > span { min-width:0; display:flex; flex-direction:column; gap:4px; }
+.update-status-card > span, .update-status-content { min-width:0; flex:1; display:flex; flex-direction:column; gap:4px; }
 .update-status-card strong { color:var(--text); font-size:12px; }
 .update-status-card small { color:var(--muted-text); font-size:10px; line-height:1.4; }
 .update-status-card em { color:#a45b48; font-size:9px; line-height:1.4; font-style:normal; }
 .update-status-card.available { background:color-mix(in srgb,var(--accent) 7%,transparent); }
 .update-status-card.available strong { color:var(--accent); }
+.update-status-card > svg.downloading { animation:update-download-pulse 1.15s ease-in-out infinite; }
+.update-progress { width:100%; margin-top:7px; display:grid; gap:6px; }
+.update-progress > div { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.update-progress > div span { color:var(--muted-text); font-size:9px; font-weight:650; text-transform:uppercase; letter-spacing:.08em; }
+.update-progress > div strong { color:var(--accent); font-size:10px; font-variant-numeric:tabular-nums; }
+.update-progress progress { width:100%; height:8px; border:0; border-radius:999px; overflow:hidden; accent-color:var(--accent); background:color-mix(in srgb,var(--accent) 12%,transparent); }
+.update-progress progress::-webkit-progress-bar { border-radius:999px; background:color-mix(in srgb,var(--accent) 12%,transparent); }
+.update-progress progress::-webkit-progress-value { border-radius:999px; background:var(--accent); transition:width .2s ease; }
+.update-progress > small { font-variant-numeric:tabular-nums; }
+.action-row .install-update-button { border-color:var(--accent); background:var(--accent); color:var(--deep); font-weight:700; }
+.action-row .install-update-button:hover:not(:disabled) { background:color-mix(in srgb,var(--accent) 82%,white); }
+.update-restart-note { margin:0; padding:0 20px 15px; color:var(--muted-text); font-size:9px; line-height:1.5; }
 @keyframes update-spin { to { transform:rotate(360deg); } }
+@keyframes update-download-pulse { 50% { transform:translateY(2px); opacity:.65; } }
 .about-row { padding:18px 20px; display:flex; justify-content:space-between; color:#77736b; font-size:10px; }
 .settings-message { position:sticky; bottom:8px; padding:11px 14px; border-radius:9px; background:var(--deep); color:white; font-size:10px; box-shadow:0 8px 25px rgba(0,0,0,.18); }
 .about-settings { padding: 20px; display: grid; gap: 18px; }

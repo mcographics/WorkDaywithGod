@@ -23,6 +23,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Passed all 43 automated tests and the Vite production build after adding iOS reminder limits and native-platform behavior.
 - Generated and synchronized the Capacitor iOS project with all eight native plugins through Swift Package Manager; final compilation, signing, simulator testing, and physical-iPhone notification testing remain macOS/Xcode-only release gates.
 
+## [1.4.5] - 2026-08-29
+
+### Added
+
+- Added in-app Windows update installation with a direct GitHub release link, an Install Now action, live download progress in Settings, verified Electron/NSIS update metadata, and automatic app restart after installation.
+
+### Verified
+
+- Passed all 45 automated tests, the Vite production build, and Windows NSIS packaging with the GitHub provider configuration and `latest.yml` metadata embedded for future updates.
+- Click-tested the packaged Settings flow through update availability, Install Now, visible progress, disabled duplicate installation, and safe recovery when no newer installable GitHub release exists.
+
 ## [1.4.4] - 2026-08-27
 
 ### Added

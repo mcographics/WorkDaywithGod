@@ -7,6 +7,8 @@ const root = path.join(__dirname, "..");
 const mainSource = fs.readFileSync(path.join(root, "electron", "main.cjs"), "utf8");
 const preloadSource = fs.readFileSync(path.join(root, "electron", "preload.cjs"), "utf8");
 const updateCheckerSource = fs.readFileSync(path.join(root, "electron", "update-checker.cjs"), "utf8");
+const appSource = fs.readFileSync(path.join(root, "src", "App.jsx"), "utf8");
+const stylesSource = fs.readFileSync(path.join(root, "src", "styles.css"), "utf8");
 const indexSource = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
@@ -37,11 +39,27 @@ test("update checks keep networking and release navigation in the trusted main p
   assert.match(updateCheckerSource, /MAX_RESPONSE_BYTES/);
   assert.match(mainSource, /fetchLatestRelease\(\{ fetchImpl: net\.fetch/);
   assert.match(mainSource, /handleTrusted\("updates:check"/);
+  assert.match(mainSource, /handleTrusted\("updates:install"/);
   assert.match(mainSource, /handleTrusted\("updates:open-release"/);
+  assert.match(mainSource, /autoUpdater\.autoDownload = false/);
+  assert.match(mainSource, /autoUpdater\.on\("download-progress"/);
+  assert.match(mainSource, /autoUpdater\.quitAndInstall\(true, true\)/);
   assert.match(mainSource, /shell\.openExternal\(status\.releaseUrl\)/);
   assert.match(preloadSource, /checkForUpdates: \(\) => ipcRenderer\.invoke\("updates:check"\)/);
+  assert.match(preloadSource, /installUpdate: \(\) => ipcRenderer\.invoke\("updates:install"\)/);
   assert.match(preloadSource, /openUpdateRelease: \(\) => ipcRenderer\.invoke\("updates:open-release"\)/);
   assert.doesNotMatch(preloadSource, /api\.github\.com|releases\/tag/);
+  assert.equal(packageJson.build.publish[0].provider, "github");
+  assert.equal(packageJson.build.publish[0].owner, "mcographics");
+  assert.equal(packageJson.build.publish[0].repo, "WorkDaywithGod");
+});
+
+test("Windows update installation has visible actions, progress, and restart guidance", () => {
+  assert.match(appSource, /"Install Now"/);
+  assert.match(appSource, />View on GitHub</);
+  assert.match(appSource, /<progress aria-label="Windows update download progress"/);
+  assert.match(appSource, /closes Work Day with God, installs it, and relaunches the new version automatically/);
+  assert.match(stylesSource, /\.update-progress progress/);
 });
 
 test("development startup uses a dedicated strict Vite port", () => {
@@ -92,8 +110,8 @@ test("PC display scaling is applied to both window modes", () => {
   assert.match(mainSource, /return \{ width, height \};/);
   assert.match(mainSource, /screen\.getAllDisplays\(\)/);
   assert.match(mainSource, /scaleFactor: display\.scaleFactor/);
-  assert.match(fs.readFileSync(path.join(root, "src", "App.jsx"), "utf8"), /3840 × 2160/);
-  assert.doesNotMatch(fs.readFileSync(path.join(root, "src", "App.jsx"), "utf8"), /5120 × 2880/);
+  assert.match(appSource, /3840 × 2160/);
+  assert.doesNotMatch(appSource, /5120 × 2880/);
 });
 
 test("packager uses an explicit application-file allowlist", () => {
