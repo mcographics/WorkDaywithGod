@@ -192,7 +192,7 @@ const browserPlatform = {
     saveBrowserState();
     return browserSnapshot();
   },
-  getAppInfo: async () => ({ version: "1.4.3", notificationSupported: false, exactNotificationSupported: false, platform: "browser", mobile: false }),
+  getAppInfo: async () => ({ version: "1.4.8", notificationSupported: false, exactNotificationSupported: false, platform: "browser", mobile: false }),
   getUpdateStatus: async () => ({ currentVersion: "1.4.3", latestVersion: "", updateAvailable: false, checking: false, installSupported: false, installPhase: "idle", downloadPercent: 0 }),
   checkForUpdates: async () => { throw new Error("Update checks are available in the Windows desktop app."); },
   installUpdate: async () => { throw new Error("Automatic installation is available in the packaged Windows app."); },

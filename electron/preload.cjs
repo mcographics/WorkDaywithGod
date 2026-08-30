@@ -1,8 +1,8 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("desktop", Object.freeze({
-  minimize: () => ipcRenderer.send("window:minimize"),
-  close: () => ipcRenderer.send("window:close"),
+  minimize: () => ipcRenderer.invoke("window:minimize"),
+  close: () => ipcRenderer.invoke("window:close"),
   setMode: (mode) => ipcRenderer.send("window:set-mode", mode === "reader" ? "reader" : "card"),
   getState: () => ipcRenderer.invoke("state:get"),
   updateSettings: (patch) => ipcRenderer.invoke("settings:update", patch),

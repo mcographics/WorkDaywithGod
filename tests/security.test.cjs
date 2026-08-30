@@ -71,11 +71,15 @@ test("Windows window controls expose predictable minimize and close behavior", (
   assert.match(appSource, /closeToTray \? "Hide the app in the system tray while reminders continue"/);
   assert.match(appSource, /aria-label=\{closeToTray \? "Close to tray" : "Close application"\}/);
   assert.match(appSource, /<WindowControls closeToTray=\{settings\.closeToTray\} \/>/);
+  assert.match(appSource, /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*void action\(\);/);
   assert.match(appSource, /<h3>Close to tray<\/h3>/);
   assert.match(mainSource, /store\?\.get\(\)\.settings\.closeToTray !== false/);
+  assert.match(mainSource, /handleTrusted\("window:minimize", minimizeWindow\)/);
+  assert.match(mainSource, /handleTrusted\("window:close", closeWindow\)/);
   assert.match(mainSource, /isQuitting = true;\s*app\.quit\(\);/);
-  assert.match(preloadSource, /minimize: \(\) => ipcRenderer\.send\("window:minimize"\)/);
-  assert.match(preloadSource, /close: \(\) => ipcRenderer\.send\("window:close"\)/);
+  assert.match(preloadSource, /minimize: \(\) => ipcRenderer\.invoke\("window:minimize"\)/);
+  assert.match(preloadSource, /close: \(\) => ipcRenderer\.invoke\("window:close"\)/);
+  assert.match(stylesSource, /\.window-controls, \.window-controls \* \{ -webkit-app-region: no-drag; \}/);
 });
 
 test("development startup uses a dedicated strict Vite port", () => {

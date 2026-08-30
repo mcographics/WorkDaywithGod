@@ -39,9 +39,14 @@ const desktop = platform;
 
 function WindowControls({ closeToTray = true }) {
   if (isMobilePlatform) return null;
-  return <div className="window-controls">
-    <button title="Minimize the window to the taskbar" aria-label="Minimize" onClick={desktop.minimize}><Minus size={16} /></button>
-    <button title={closeToTray ? "Hide the app in the system tray while reminders continue" : "Close Work Day with God completely"} aria-label={closeToTray ? "Close to tray" : "Close application"} onClick={desktop.close}><X size={16} /></button>
+  const runWindowAction = (action) => (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void action();
+  };
+  return <div className="window-controls" onPointerDown={(event) => event.stopPropagation()}>
+    <button type="button" title="Minimize the window to the taskbar" aria-label="Minimize" onClick={runWindowAction(desktop.minimize)}><Minus size={16} /></button>
+    <button type="button" title={closeToTray ? "Hide the app in the system tray while reminders continue" : "Close Work Day with God completely"} aria-label={closeToTray ? "Close to tray" : "Close application"} onClick={runWindowAction(desktop.close)}><X size={16} /></button>
   </div>;
 }
 

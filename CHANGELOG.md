@@ -23,6 +23,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Passed all 43 automated tests and the Vite production build after adding iOS reminder limits and native-platform behavior.
 - Generated and synchronized the Capacitor iOS project with all eight native plugins through Swift Package Manager; final compilation, signing, simulator testing, and physical-iPhone notification testing remain macOS/Xcode-only release gates.
 
+## [1.4.8] - 2026-08-30
+
+### Fixed
+
+- Made the minimize and close controls reliably clickable in both the compact Verse Card and full reader by excluding the complete control group from Electron's draggable title-bar regions.
+- Replaced silent window-control messages with trusted request-and-response IPC and deterministic minimize, close-to-tray, and quit actions in the Electron main process.
+
+### Verified
+
+- Passed the complete automated test suite and Vite production build.
+- Mouse-dispatched both controls through the rendered Electron interface and observed the window become hidden after minimize and close-to-tray actions.
+
+## [Android 1.0.2] - 2026-08-30
+
+### Changed
+
+- Refreshed the signed Android package from the current shared application source and raised its version code for an in-place update over Android 1.0.1.
+- Kept Electron-only window controls and Windows update behavior outside the native Android interface.
+
+### Verified
+
+- Passed all 46 automated tests, the Vite production build, Capacitor synchronization, and the Gradle release build.
+- Verified APK zip alignment, versionName 1.0.2/versionCode 100002, the established Android signing certificate, and APK Signature Scheme v2; no physical Android device was connected for installation or live UI verification.
+
 ## [1.4.5] - 2026-08-29
 
 ### Added
@@ -303,7 +327,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/android-v1.0.1...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.8...HEAD
+[1.4.8]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.7...v1.4.8
+[Android 1.0.2]: https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.2
 [Android 1.0.1]: https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.1
 [Android 1.0.0]: https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.0
 [1.4.3]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.2...v1.4.3

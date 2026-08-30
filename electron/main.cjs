@@ -118,6 +118,23 @@ function showWindow(view = "today") {
   mainWindow.focus();
 }
 
+function minimizeWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) return { state: "unavailable" };
+  mainWindow.minimize();
+  return { state: "minimized" };
+}
+
+function closeWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) return { state: "unavailable" };
+  if (store?.get().settings.closeToTray !== false) {
+    mainWindow.hide();
+    return { state: "hidden" };
+  }
+  isQuitting = true;
+  app.quit();
+  return { state: "quitting" };
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     ...compactSize,
@@ -157,13 +174,8 @@ function createWindow() {
   });
   mainWindow.on("close", (event) => {
     if (isQuitting) return;
-    if (store?.get().settings.closeToTray !== false) {
-      event.preventDefault();
-      mainWindow.hide();
-      return;
-    }
-    isQuitting = true;
-    app.quit();
+    event.preventDefault();
+    closeWindow();
   });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https:\/\/(worldenglish\.bible|www\.biblegateway\.com)\//.test(url)) shell.openExternal(url);
@@ -543,8 +555,8 @@ function registerIpc() {
     return shell.openExternal(status.releaseUrl || "https://github.com/mcographics/WorkDaywithGod/releases/latest");
   });
   handleTrusted("support:discord", () => shell.openExternal("https://discord.gg/2UvdpY4JSW"));
-  onTrusted("window:minimize", () => mainWindow?.minimize());
-  onTrusted("window:close", () => mainWindow?.close());
+  handleTrusted("window:minimize", minimizeWindow);
+  handleTrusted("window:close", closeWindow);
   onTrusted("window:set-mode", (mode) => {
     if (!mainWindow) return;
     const size = mode === "reader" ? readerSize : compactSize;

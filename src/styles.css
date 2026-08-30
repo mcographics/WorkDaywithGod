@@ -29,8 +29,9 @@ button, select, input { -webkit-app-region: no-drag; }
 .brand-mark, .wordmark { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
 .brand-mark span, .wordmark span { font-size: clamp(7px, 2.3vw, 10px); letter-spacing: .2em; font-weight: 600; }
 .brand-mark em, .wordmark em { font-family: Georgia, serif; font-size: clamp(10px, 3.2vw, 14px); color: var(--accent, #d8bd7f); margin-top: calc(4px * var(--card-ui-scale, 1)); }
-.window-controls { display: flex; gap: calc(5px * var(--card-ui-scale, 1)); }
-.window-controls button { border: 0; background: rgba(18,20,16,.36); width: clamp(22px, 6.6vw, 29px); height: clamp(22px, 6.6vw, 29px); border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+.window-controls { position: relative; z-index: 20; display: flex; gap: calc(5px * var(--card-ui-scale, 1)); pointer-events: auto; -webkit-app-region: no-drag; }
+.window-controls, .window-controls * { -webkit-app-region: no-drag; }
+.window-controls button { border: 0; background: rgba(18,20,16,.36); width: clamp(22px, 6.6vw, 29px); height: clamp(22px, 6.6vw, 29px); border-radius: 50%; display: grid; place-items: center; cursor: pointer; pointer-events: auto; }
 .window-controls button:hover { background: rgba(255,255,255,.18); }
 .compact-shell .window-controls svg { width: clamp(12px, 3.7vw, 16px); height: clamp(12px, 3.7vw, 16px); }
 .window-controls button:last-child { color: #ff5f62; }
