@@ -5,6 +5,7 @@ platform-tools-latest-windows/
 *signing*.properties
 dist/
 release/
+.release-verify-*/
 /adverts/
 /tmp/
 .scene-candidates.json
