@@ -1,6 +1,6 @@
 # Work Day with God for Android
 
-Work Day with God for Android is a free, Christ-centred, offline-first devotional companion. Android 1.0.1 is maintained as a separate release line from Work Day with God 1.4.3 for Windows.
+Work Day with God for Android is a free, Christ-centred, offline-first devotional companion. Android 1.0.3 is maintained as a separate release line from Work Day with God 1.4.9 for Windows.
 
 ## Supported devices
 
@@ -13,12 +13,12 @@ The application targets Android API 36. It uses Android’s installed System Web
 
 ## Install from GitHub
 
-1. Open the [Android 1.0.1 GitHub release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.1).
-2. Download `Work-Day-with-God-Android-1.0.1.apk` and `Work-Day-with-God-Android-1.0.1.apk.sha256`.
+1. Open the [Android 1.0.3 GitHub release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.3).
+2. Download `Work-Day-with-God-Android-1.0.3.apk` and `Work-Day-with-God-Android-1.0.3.apk.sha256`.
 3. Optionally verify the download in PowerShell:
 
    ```powershell
-   Get-FileHash .\Work-Day-with-God-Android-1.0.1.apk -Algorithm SHA256
+   Get-FileHash .\Work-Day-with-God-Android-1.0.3.apk -Algorithm SHA256
    ```
 
    Compare the result with the first value in the downloaded `.sha256` file and the checksum printed in the GitHub release notes.
@@ -30,13 +30,14 @@ The APK is signed with a dedicated Work Day with God Android release key. Its si
 
 ## Notification and reminder types
 
-Android 1.0.1 has three application-specific reminder paths:
+Android 1.0.3 has three application-specific reminder paths plus a separate app-update notification:
 
 | Reminder | Created by | Notification text | Opens |
 | --- | --- | --- | --- |
 | Daily reading | One or more local times in **Settings → Schedule style → Daily reading** | **Today’s devotional is ready** | Today’s full devotional |
 | Remind me later | Clock action on the compact Verse Card | **Your quiet moment is ready** | Compact Verse Card |
 | Devotional timer | Whole-minute interval in **Settings → Schedule style → Devotional timer** | **Devotional timer** | Compact Verse Card |
+| App update | A new Android release is found on GitHub | **Work Day with God update available** | Android Updates settings |
 
 Each type has a distinct Android notification channel plus a silent version. The app’s **Notification sound** switch chooses the audible or silent channel when it schedules reminders. Android’s own per-channel notification settings take precedence if the user customizes them in system Settings.
 
@@ -47,7 +48,7 @@ Schedules obey the selected active weekdays, optional quiet hours, notification 
 - **Notifications:** Required on Android 13 and newer to display reminders. The app asks only when notifications are enabled or tested.
 - **Alarms & reminders:** Optional special access used for more precise delivery. Without it, Android may widen or delay reminder delivery to conserve battery. Use **Settings → Notifications and reminders → Precise reminder timing** in the app to open the correct Android system page.
 - **Approximate location:** Optional and used only on the device to calculate local sunrise and sunset for **Auto** colour mode. If permission is declined or location is unavailable, the app uses its offline local-time fallback.
-- **Internet:** Used only for an action the user initiates, such as opening Discord support or a public release page. The devotional catalogue, Scripture, scenic artwork, settings, history, and reminders are installed locally.
+- **Internet:** Used only for opening Discord/support pages or checking/downloading an Android release from the fixed Work Day with God GitHub repository. The devotional catalogue, Scripture, scenic artwork, settings, history, and reminders are installed locally.
 
 Android cloud backup is disabled for the application. Work Day with God does not request contacts, microphone, camera, phone, SMS, or account permissions.
 
@@ -69,6 +70,17 @@ The Android layout is not the Windows executable inside a container. It is a Cap
 - responsive History and Future Devotionals calendars;
 - safe-area handling for status bars, navigation areas, and display cutouts;
 - mobile-specific reader sizing while keeping the same devotional and Scripture content as Windows.
+- Phone UI size adjustment from 85% to 140% for devices using enlarged Android display or font settings; the app uses fluid widths, wrapping controls, and scrollable Settings so enlarged content remains usable.
+
+## Android updates
+
+Open **Settings → Android updates**:
+
+- **Update** checks the public Android release line on GitHub and reports the installed and available versions.
+- **Install** downloads the exact official APK, reports progress, and opens Android’s package installer. Approve the Android install prompt to complete the update.
+- **View on GitHub** opens the matching Android release page.
+
+The app sends an update-available notification once for each newly discovered Android release when notifications are enabled. Installing a newer APK over the current signed installation preserves local settings, favourites, history, reading positions, and reminders. Android may require **Install unknown apps** permission for Work Day with God before the in-app installer can proceed.
 
 ## Build Android locally
 
@@ -87,7 +99,7 @@ npm run android:sync
 npm run android:debug
 ```
 
-The debug command writes `release/android/Work-Day-with-God-Android-Debug-1.0.1.apk` plus a `.sha256` file. Debug builds use the standard Android development key and must not be published as production releases.
+The debug command writes `release/android/Work-Day-with-God-Android-Debug-1.0.3.apk` plus a `.sha256` file. Debug builds use the standard Android development key and must not be published as production releases.
 
 ## Build a signed release
 
@@ -117,11 +129,11 @@ npm run android:release
 The release helper performs the Vite production build, synchronizes Capacitor, runs Gradle `assembleRelease`, copies the APK into `release/android`, verifies zip alignment, verifies the APK signing certificate, and writes a SHA-256 sidecar. Successful output is:
 
 ```text
-release/android/Work-Day-with-God-Android-1.0.1.apk
-release/android/Work-Day-with-God-Android-1.0.1.apk.sha256
+release/android/Work-Day-with-God-Android-1.0.3.apk
+release/android/Work-Day-with-God-Android-1.0.3.apk.sha256
 ```
 
-Android’s visible semantic version and monotonically increasing build code live in `android/gradle.properties`. Windows continues to use the repository-level `package.json` version. For Android 1.0.1, the version name is `1.0.1` and version code is `100001`; future Android releases must always increase the version code.
+Android’s visible semantic version and monotonically increasing build code live in `android/gradle.properties`. Windows continues to use the repository-level `package.json` version. For Android 1.0.3, the version name is `1.0.3` and version code is `100003`; future Android releases must always increase the version code.
 
 ## Troubleshooting
 

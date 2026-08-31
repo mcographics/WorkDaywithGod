@@ -1,4 +1,4 @@
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
@@ -14,6 +14,11 @@ import {
   reminderNotificationChannels,
   reminderNotificationDefinition,
 } from "./mobile-reminders.mjs";
+import {
+  fetchLatestAndroidRelease,
+  isMobileCheckDue,
+  normalizeAndroidReleaseTag,
+} from "./mobile-update-checker.mjs";
 
 export const defaultSettings = {
   launchAtLogin: true, closeToTray: true, showStartupCard: true, startInTray: false,
@@ -21,7 +26,7 @@ export const defaultSettings = {
   reminderTimes: ["09:00", "12:00", "15:00", "17:00"], intervalMinutes: 60,
   activeDays: [1, 2, 3, 4, 5], quietHours: { enabled: true, start: "18:00", end: "08:00" },
   theme: "gold", colorMode: "system", imageOverlay: 38, imageTransition: true,
-  focusMode: false, fontScale: 1, cardFontScale: 1, scriptureFontScale: 1, displayScale: "system", screenResolution: "system", reducedMotion: false,
+  focusMode: false, fontScale: 1, cardFontScale: 1, scriptureFontScale: 1, mobileUiScale: 1, displayScale: "system", screenResolution: "system", reducedMotion: false,
   autoScrollEnabled: true, autoScrollSpeed: 2, hoverPausesScroll: true,
   rememberReadingPosition: true, showReflectionPrompt: true, showPrayer: true, showAttribution: true,
   automaticDailyContent: true, automaticDailyImage: true, preventFutureDevotionals: false, showStreak: true,
@@ -35,6 +40,9 @@ const defaultState = () => ({
   readingPositions: {},
   snoozeUntil: 0,
   remindAt: 0,
+  updateLastCheckedAt: 0,
+  updateLatestTag: "",
+  updateNotifiedTag: "",
   migrationComplete: true,
 });
 
@@ -47,13 +55,16 @@ const TEST_NOTIFICATION_IDS = {
   "remind-later": 2_000_902,
   "devotional-timer": 2_000_903,
 };
+const UPDATE_NOTIFICATION_ID = 2_001_000;
 const LEGACY_SILENT_CHANNEL_ID = "wdwg-gentle-silent";
+const UPDATE_CHANNEL_ID = "wdwg-updates";
 const SUPPORT_URL = "https://discord.gg/2UvdpY4JSW";
 const nativePlatformName = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : "";
 const isNativeAndroid = nativePlatformName === "android";
 const isNativeIos = nativePlatformName === "ios";
 const isNativeMobile = isNativeAndroid || isNativeIos;
 const mobileSystemName = isNativeIos ? "iOS" : "Android";
+const AndroidUpdater = isNativeAndroid ? registerPlugin("AndroidUpdater") : null;
 
 export const isMobilePlatform = isNativeMobile;
 export const platformName = isNativeMobile ? nativePlatformName : (window.desktop ? "windows" : "browser");
@@ -86,6 +97,7 @@ function normalizeSettings(input = {}) {
   merged.intervalMinutes = Math.round(clampNumber(merged.intervalMinutes, 60, 1, 120));
   merged.remindLaterMinutes = normalizeRemindLater(merged.remindLaterMinutes);
   merged.cardFontScale = clampNumber(merged.cardFontScale, 1, 0.65, 1.4);
+  merged.mobileUiScale = clampNumber(merged.mobileUiScale, 1, 0.85, 1.4);
   merged.displayScale = ["system", "0.65", "0.75", "0.85", "1", "1.15", "1.25", "1.5"].includes(String(merged.displayScale))
     ? String(merged.displayScale)
     : defaultSettings.displayScale;
@@ -112,6 +124,9 @@ function normalizeState(input) {
     readingPositions: source.readingPositions && typeof source.readingPositions === "object" && !Array.isArray(source.readingPositions) ? { ...source.readingPositions } : {},
     snoozeUntil: Math.max(0, Number(source.snoozeUntil) || 0),
     remindAt: Math.max(0, Number(source.remindAt) || 0),
+    updateLastCheckedAt: Math.max(0, Number(source.updateLastCheckedAt) || 0),
+    updateLatestTag: normalizeAndroidReleaseTag(source.updateLatestTag),
+    updateNotifiedTag: normalizeAndroidReleaseTag(source.updateNotifiedTag),
     migrationComplete: true,
   };
 }
@@ -192,7 +207,7 @@ const browserPlatform = {
     saveBrowserState();
     return browserSnapshot();
   },
-  getAppInfo: async () => ({ version: "1.4.8", notificationSupported: false, exactNotificationSupported: false, platform: "browser", mobile: false }),
+  getAppInfo: async () => ({ version: "1.4.9", notificationSupported: false, exactNotificationSupported: false, platform: "browser", mobile: false }),
   getUpdateStatus: async () => ({ currentVersion: "1.4.3", latestVersion: "", updateAvailable: false, checking: false, installSupported: false, installPhase: "idle", downloadPercent: 0 }),
   checkForUpdates: async () => { throw new Error("Update checks are available in the Windows desktop app."); },
   installUpdate: async () => { throw new Error("Automatic installation is available in the packaged Windows app."); },
@@ -206,10 +221,14 @@ let mobileState;
 let mobileWriteQueue = Promise.resolve();
 let mobileScheduleQueue = Promise.resolve();
 let mobileScheduleTimer = 0;
+let mobileAutoUpdateTimer = 0;
 let mobileInitialized = false;
+let mobileUpdateCheckInFlight;
+let mobileUpdateState = { phase: "idle", percent: 0, bytesPerSecond: 0, transferred: 0, total: 0, error: "" };
 const navigateListeners = new Set();
 const dateListeners = new Set();
 const stateListeners = new Set();
+const updateListeners = new Set();
 
 async function readMobileState() {
   if (mobileState) return clone(mobileState);
@@ -245,6 +264,100 @@ function queueMobileReschedule() {
   }, 120);
 }
 
+function nextMobileCheckAt(frequency, lastCheckedAt) {
+  const intervals = { daily: 24 * 60 * 60 * 1000, weekly: 7 * 24 * 60 * 60 * 1000, monthly: 30 * 24 * 60 * 60 * 1000 };
+  const interval = intervals[frequency];
+  const checkedAt = Number(lastCheckedAt) || 0;
+  return interval && checkedAt > 0 ? checkedAt + interval : 0;
+}
+
+function mobileUpdateStatus() {
+  const state = mobileState || defaultState();
+  const currentVersion = state.__currentVersion || "unknown";
+  const latestTag = normalizeAndroidReleaseTag(state.updateLatestTag);
+  let updateAvailable = false;
+  if (latestTag && currentVersion !== "unknown") {
+    try { updateAvailable = fetchLatestAndroidRelease && latestTag.replace(/^android-v/i, "") !== currentVersion && compareMobileVersionSafe(latestTag, currentVersion) > 0; } catch {}
+  }
+  return {
+    currentVersion,
+    latestTag,
+    latestVersion: latestTag.replace(/^android-v/i, ""),
+    updateAvailable,
+    releaseUrl: latestTag ? `https://github.com/mcographics/WorkDaywithGod/releases/tag/${encodeURIComponent(latestTag)}` : "https://github.com/mcographics/WorkDaywithGod/releases",
+    lastCheckedAt: state.updateLastCheckedAt,
+    nextCheckAt: nextMobileCheckAt(state.settings.updateCheckFrequency, state.updateLastCheckedAt),
+    frequency: state.settings.updateCheckFrequency,
+    checking: Boolean(mobileUpdateCheckInFlight),
+    installSupported: isNativeAndroid && Boolean(AndroidUpdater),
+    installPhase: mobileUpdateState.phase,
+    downloadPercent: mobileUpdateState.percent,
+    bytesPerSecond: mobileUpdateState.bytesPerSecond,
+    transferred: mobileUpdateState.transferred,
+    total: mobileUpdateState.total,
+    error: mobileUpdateState.error,
+  };
+}
+
+function compareMobileVersionSafe(left, right) {
+  const leftParts = left.replace(/^android-v/i, "").split(/[.-]/).slice(0, 3).map(Number);
+  const rightParts = right.replace(/^android-v/i, "").split(/[.-]/).slice(0, 3).map(Number);
+  for (let index = 0; index < 3; index += 1) if (leftParts[index] !== rightParts[index]) return leftParts[index] > rightParts[index] ? 1 : -1;
+  return 0;
+}
+
+function emitMobileUpdateStatus() {
+  const status = mobileUpdateStatus();
+  updateListeners.forEach((listener) => listener(status));
+}
+
+async function notifyMobileUpdateAvailable(status) {
+  const state = mobileState || defaultState();
+  if (!isNativeAndroid || !state.settings.notificationsEnabled || !(await notificationPermission(false))) return;
+  await ensureNotificationChannels();
+  await LocalNotifications.schedule({ notifications: [{
+    id: UPDATE_NOTIFICATION_ID,
+    title: "Work Day with God update available",
+    body: `Android version ${status.latestVersion} is ready to install from GitHub.`,
+    autoCancel: true,
+    channelId: UPDATE_CHANNEL_ID,
+    extra: { view: "settings", kind: "app-update" },
+    schedule: { at: new Date(Date.now() + 750) },
+  }] });
+}
+
+async function checkAndroidUpdates({ manual = false } = {}) {
+  if (!isNativeAndroid) throw new Error(isNativeIos ? "iOS updates are delivered through TestFlight or the App Store." : "Android updates are available in the native phone app.");
+  if (!manual && mobileState && !isMobileCheckDue(mobileState.settings.updateCheckFrequency, mobileState.updateLastCheckedAt)) return mobileUpdateStatus();
+  if (mobileUpdateCheckInFlight) return mobileUpdateCheckInFlight;
+  mobileUpdateState = { ...mobileUpdateState, phase: "checking", error: "" };
+  emitMobileUpdateStatus();
+  const operation = (async () => {
+    try {
+      const info = await CapacitorApp.getInfo();
+      const result = await fetchLatestAndroidRelease({ fetchImpl: (...args) => window.fetch(...args), currentVersion: info.version });
+      const before = await readMobileState();
+      const shouldNotify = result.updateAvailable && before.updateNotifiedTag !== result.latestTag;
+      const next = normalizeState({ ...before, __currentVersion: info.version, updateLastCheckedAt: result.checkedAt, updateLatestTag: result.latestTag, updateNotifiedTag: shouldNotify ? result.latestTag : before.updateNotifiedTag });
+      mobileState = next;
+      await Preferences.set({ key: STATE_KEY, value: JSON.stringify(next) });
+      mobileUpdateState = { ...mobileUpdateState, phase: "idle", percent: 0, error: "" };
+      const status = { ...mobileUpdateStatus(), ...result, checking: false, installSupported: true, installPhase: "idle" };
+      stateListeners.forEach((listener) => listener(clone(next)));
+      if (shouldNotify) await notifyMobileUpdateAvailable(status);
+      return status;
+    } catch (error) {
+      mobileUpdateState = { ...mobileUpdateState, phase: "error", error: error?.message || "Unable to check GitHub for Android updates." };
+      throw new Error(mobileUpdateState.error);
+    } finally {
+      mobileUpdateCheckInFlight = null;
+      emitMobileUpdateStatus();
+    }
+  })();
+  mobileUpdateCheckInFlight = operation;
+  return operation;
+}
+
 function notificationBase(settings, id, kind, extra = {}) {
   const definition = reminderNotificationDefinition(kind, settings.notificationSound);
   const notification = {
@@ -265,6 +378,7 @@ async function ensureNotificationChannels() {
   for (const channel of reminderNotificationChannels()) {
     await LocalNotifications.createChannel(channel).catch(() => {});
   }
+  await LocalNotifications.createChannel({ id: UPDATE_CHANNEL_ID, name: "App updates", description: "Availability notifications for new Work Day with God Android releases.", importance: 3, visibility: 1 }).catch(() => {});
 }
 
 async function notificationPermission(request = false) {
@@ -355,6 +469,18 @@ async function initializeMobile() {
     }
   });
   if (isNativeAndroid) {
+    await AndroidUpdater?.addListener("downloadProgress", (progress) => {
+      mobileUpdateState = {
+        ...mobileUpdateState,
+        phase: "downloading",
+        percent: Math.max(0, Math.min(100, Number(progress?.percent) || 0)),
+        bytesPerSecond: Math.max(0, Number(progress?.bytesPerSecond) || 0),
+        transferred: Math.max(0, Number(progress?.transferred) || 0),
+        total: Math.max(0, Number(progress?.total) || 0),
+        error: "",
+      };
+      emitMobileUpdateStatus();
+    });
     await CapacitorApp.addListener("backButton", ({ canGoBack }) => {
       if (!canGoBack) navigateListeners.forEach((listener) => listener("back"));
     });
@@ -394,6 +520,10 @@ const mobilePlatform = {
       await Preferences.set({ key: STATE_KEY, value: JSON.stringify(state) });
     }
     queueMobileReschedule();
+    if (isNativeAndroid && isMobileCheckDue(state.settings.updateCheckFrequency, state.updateLastCheckedAt)) {
+      window.clearTimeout(mobileAutoUpdateTimer);
+      mobileAutoUpdateTimer = window.setTimeout(() => checkAndroidUpdates().catch(() => {}), 900);
+    }
     return state;
   },
   updateSettings: async (patch) => {
@@ -472,15 +602,39 @@ const mobilePlatform = {
       mobile: true,
     };
   },
-  getUpdateStatus: async () => ({ currentVersion: (await CapacitorApp.getInfo()).version, latestVersion: "", updateAvailable: false, checking: false, installSupported: false, installPhase: "idle", downloadPercent: 0 }),
-  checkForUpdates: async () => { throw new Error(isNativeIos ? "iOS updates are delivered through TestFlight or the App Store." : "Android updates are delivered with a new APK or through Google Play."); },
-  installUpdate: async () => { throw new Error(isNativeIos ? "Install updates through TestFlight or the App Store." : "Install updates from a new APK or through Google Play."); },
-  openUpdateRelease: async () => false,
+  getUpdateStatus: async () => {
+    await initializeMobile();
+    const info = await CapacitorApp.getInfo();
+    mobileState = { ...(await readMobileState()), __currentVersion: info.version };
+    return mobileUpdateStatus();
+  },
+  checkForUpdates: async () => checkAndroidUpdates({ manual: true }),
+  installUpdate: async () => {
+    if (!isNativeAndroid || !AndroidUpdater) throw new Error(isNativeIos ? "iOS updates are delivered through TestFlight or the App Store." : "Android’s native updater is unavailable in this build.");
+    await initializeMobile();
+    mobileUpdateState = { ...mobileUpdateState, phase: "preparing", percent: 0, error: "" };
+    emitMobileUpdateStatus();
+    const status = await checkAndroidUpdates({ manual: true });
+    if (!status.updateAvailable) {
+      mobileUpdateState = { ...mobileUpdateState, phase: "idle", percent: 0 };
+      emitMobileUpdateStatus();
+      return { ...status, alreadyLatest: true };
+    }
+    await AndroidUpdater.downloadAndInstall({ downloadUrl: status.apkUrl, version: status.latestVersion });
+    mobileUpdateState = { ...mobileUpdateState, phase: "installing", percent: 100, error: "" };
+    emitMobileUpdateStatus();
+    return mobileUpdateStatus();
+  },
+  openUpdateRelease: async () => {
+    const status = mobileUpdateStatus();
+    await Browser.open({ url: status.releaseUrl });
+    return true;
+  },
   openSupportDiscord: async () => Browser.open({ url: SUPPORT_URL }),
   onNavigate: (listener) => { navigateListeners.add(listener); return () => navigateListeners.delete(listener); },
   onOpenDate: (listener) => { dateListeners.add(listener); return () => dateListeners.delete(listener); },
   onStateChanged: (listener) => { stateListeners.add(listener); return () => stateListeners.delete(listener); },
-  onUpdateStatus: emptyListeners,
+  onUpdateStatus: (listener) => { updateListeners.add(listener); return () => updateListeners.delete(listener); },
 };
 
 const desktopPlatform = window.desktop ? {

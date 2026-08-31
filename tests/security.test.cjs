@@ -9,6 +9,9 @@ const preloadSource = fs.readFileSync(path.join(root, "electron", "preload.cjs")
 const updateCheckerSource = fs.readFileSync(path.join(root, "electron", "update-checker.cjs"), "utf8");
 const appSource = fs.readFileSync(path.join(root, "src", "App.jsx"), "utf8");
 const stylesSource = fs.readFileSync(path.join(root, "src", "styles.css"), "utf8");
+const mobileUpdateSource = fs.readFileSync(path.join(root, "src", "mobile-update-checker.mjs"), "utf8");
+const androidPluginSource = fs.readFileSync(path.join(root, "android", "app", "src", "main", "java", "com", "mcographics", "workdaywithgod", "AndroidUpdaterPlugin.java"), "utf8");
+const androidManifestSource = fs.readFileSync(path.join(root, "android", "app", "src", "main", "AndroidManifest.xml"), "utf8");
 const indexSource = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
@@ -64,6 +67,25 @@ test("Windows update installation has visible actions, progress, and restart gui
   assert.match(mainSource, /phase: "checking"/);
   assert.match(mainSource, /alreadyLatest: true/);
   assert.match(stylesSource, /\.update-progress progress/);
+});
+
+test("Android updates use a separate release line with native download and install actions", () => {
+  assert.match(mobileUpdateSource, /releases\?per_page=100/);
+  assert.match(mobileUpdateSource, /android-v/);
+  assert.match(mobileUpdateSource, /Work-Day-with-God-Android-/);
+  assert.match(mobileUpdateSource, /unexpectedly large/);
+  assert.match(androidPluginSource, /@CapacitorPlugin\(name = "AndroidUpdater"\)/);
+  assert.match(androidPluginSource, /REQUEST_INSTALL_PACKAGES|canRequestPackageInstalls/);
+  assert.match(androidPluginSource, /release-assets\.githubusercontent\.com/);
+  assert.match(androidPluginSource, /downloadProgress/);
+  assert.match(androidManifestSource, /android\.permission\.REQUEST_INSTALL_PACKAGES/);
+  assert.match(appSource, /aria-label="Phone UI size"/);
+  assert.match(appSource, /"Update"/);
+  assert.match(appSource, /"Install"/);
+  assert.match(appSource, /View on GitHub/);
+  assert.match(appSource, /Android update progress/);
+  assert.match(stylesSource, /--mobile-scale/);
+  assert.match(stylesSource, /mobile-update-actions/);
 });
 
 test("Windows window controls expose predictable minimize and close behavior", () => {

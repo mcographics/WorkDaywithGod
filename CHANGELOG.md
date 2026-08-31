@@ -8,6 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Added an Android-specific GitHub release updater with separate Android version tracking, automatic release checks, one-time update-available notifications, APK download progress, and an Android package-installer handoff.
+- Added Android Settings actions for **Update**, **Install**, and **View on GitHub**, with clear installer guidance and local-data preservation notes.
+- Added a persisted **Phone UI size** slider from 85% to 140% so users with enlarged Android display or font settings can tune readable type and touch targets without a page-wide zoom.
+
+### Changed
+
+- Updated the Windows release line to 1.4.9 so the shared application source includes the current mobile updater, adaptive phone UI, and unified update-notification behavior.
+- Kept Android versioning independent at 1.0.3 / version code 100003 and retained the Windows-only Electron installer updater boundary.
+
+### Verified
+
+- Added automated coverage for Android release selection, official APK URL construction, malformed/oversized release rejection, native updater wiring, update buttons, progress UI, and Phone UI size persistence boundaries.
+
 - Added the native Capacitor iOS project for iPhone and iPad, configured as iOS 1.0.0 with bundle identifier `com.mcographics.workdaywithgod`, iOS 15 minimum deployment, Swift Package Manager dependencies, branded App Store artwork, and a branded launch screen.
 - Added native iOS private preferences, backup sharing and import, optional location access for sunrise and sunset, secure external links, status-bar integration, lifecycle refresh, and safe-area behavior.
 - Added native iOS Daily reading, Remind me later, and Devotional timer notifications with distinct content, destinations, optional sound, quiet hours, active weekdays, and a platform-safe 64-notification pending limit.
@@ -22,6 +35,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Passed all 43 automated tests and the Vite production build after adding iOS reminder limits and native-platform behavior.
 - Generated and synchronized the Capacitor iOS project with all eight native plugins through Swift Package Manager; final compilation, signing, simulator testing, and physical-iPhone notification testing remain macOS/Xcode-only release gates.
+
+## [1.4.9] - 2026-08-31
+
+### Added
+
+- Added a separate Android 1.0.3 GitHub update line and native in-app updater bridge.
+- Added update availability to the Android notification channel so a discovered APK can be surfaced as a normal local app notification.
+- Added a responsive Phone UI size control for enlarged system display settings.
+
+### Changed
+
+- Refreshed the Windows 1.4.9 package with the unified update status and responsive UI changes.
 
 ## [1.4.8] - 2026-08-30
 
@@ -327,7 +352,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - An unsigned per-user NSIS installer with Start Menu and optional desktop shortcuts.
 - Public README screenshots, content provenance documentation, and a vulnerability-reporting policy.
 
-[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.8...HEAD
+[Unreleased]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.9...HEAD
+[1.4.9]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.8...v1.4.9
+[Android 1.0.3]: https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.3
 [1.4.8]: https://github.com/mcographics/WorkDaywithGod/compare/v1.4.7...v1.4.8
 [Android 1.0.2]: https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.2
 [Android 1.0.1]: https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.1
