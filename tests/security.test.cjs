@@ -88,6 +88,14 @@ test("Android updates use a separate release line with native download and insta
   assert.match(stylesSource, /mobile-update-actions/);
 });
 
+test("mobile Verse Card A-minus and A-plus controls affect every quote length", () => {
+  assert.match(appSource, /cardFontScale: Math\.max\(\.65, Number\(\(settings\.cardFontScale - \.05\)\.toFixed\(2\)\)\)/);
+  assert.match(appSource, /cardFontScale: Math\.min\(1\.4, Number\(\(settings\.cardFontScale \+ \.05\)\.toFixed\(2\)\)\)/);
+  assert.match(stylesSource, /\.platform-mobile blockquote \{ font-size: calc\(clamp\(26px, 7\.6vw, 38px\) \* var\(--card-font-scale, 1\)\);/);
+  assert.match(stylesSource, /\.platform-mobile \.verse-long blockquote \{ font-size: calc\(clamp\(22px, 6\.5vw, 31px\) \* var\(--card-font-scale, 1\)\);/);
+  assert.match(stylesSource, /\.platform-mobile \.verse-extra-long blockquote \{ font-size: calc\(clamp\(19px, 5\.6vw, 26px\) \* var\(--card-font-scale, 1\)\);/);
+});
+
 test("Windows window controls expose predictable minimize and close behavior", () => {
   assert.match(appSource, /title="Minimize the window to the taskbar"/);
   assert.match(appSource, /closeToTray \? "Hide the app in the system tray while reminders continue"/);

@@ -15,11 +15,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 
 - Updated the Windows release line to 1.4.9 so the shared application source includes the current mobile updater, adaptive phone UI, and unified update-notification behavior.
-- Kept Android versioning independent at 1.0.3 / version code 100003 and retained the Windows-only Electron installer updater boundary.
+- Kept Android versioning independent at 1.0.4 / version code 100004 and retained the Windows-only Electron installer updater boundary.
 
 ### Verified
 
 - Added automated coverage for Android release selection, official APK URL construction, malformed/oversized release rejection, native updater wiring, update buttons, progress UI, and Phone UI size persistence boundaries.
+
+## [Android 1.0.4] - 2026-09-01
+
+### Fixed
+
+- Fixed the phone Verse Card A− and A+ controls so they now change the quotation size on Android, including short, long, and extra-long verses.
+
+### Verified
+
+- Passed the complete automated test suite, Vite production build, Capacitor synchronization, signed Gradle release build, APK alignment check, and signing-certificate verification.
+- Installed the signed build over the existing Android installation and launched it on the connected Samsung SM-G781W without removing local app data.
 
 - Added the native Capacitor iOS project for iPhone and iPad, configured as iOS 1.0.0 with bundle identifier `com.mcographics.workdaywithgod`, iOS 15 minimum deployment, Swift Package Manager dependencies, branded App Store artwork, and a branded launch screen.
 - Added native iOS private preferences, backup sharing and import, optional location access for sunrise and sunset, secure external links, status-bar integration, lifecycle refresh, and safe-area behavior.

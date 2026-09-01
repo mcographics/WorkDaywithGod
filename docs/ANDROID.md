@@ -1,6 +1,6 @@
 # Work Day with God for Android
 
-Work Day with God for Android is a free, Christ-centred, offline-first devotional companion. Android 1.0.3 is maintained as a separate release line from Work Day with God 1.4.9 for Windows.
+Work Day with God for Android is a free, Christ-centred, offline-first devotional companion. Android 1.0.4 is maintained as a separate release line from Work Day with God 1.4.9 for Windows.
 
 ## Supported devices
 
@@ -13,12 +13,12 @@ The application targets Android API 36. It uses Android’s installed System Web
 
 ## Install from GitHub
 
-1. Open the [Android 1.0.3 GitHub release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.3).
-2. Download `Work-Day-with-God-Android-1.0.3.apk` and `Work-Day-with-God-Android-1.0.3.apk.sha256`.
+1. Open the [Android 1.0.4 GitHub release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.4).
+2. Download `Work-Day-with-God-Android-1.0.4.apk` and `Work-Day-with-God-Android-1.0.4.apk.sha256`.
 3. Optionally verify the download in PowerShell:
 
    ```powershell
-   Get-FileHash .\Work-Day-with-God-Android-1.0.3.apk -Algorithm SHA256
+   Get-FileHash .\Work-Day-with-God-Android-1.0.4.apk -Algorithm SHA256
    ```
 
    Compare the result with the first value in the downloaded `.sha256` file and the checksum printed in the GitHub release notes.
@@ -30,7 +30,7 @@ The APK is signed with a dedicated Work Day with God Android release key. Its si
 
 ## Notification and reminder types
 
-Android 1.0.3 has three application-specific reminder paths plus a separate app-update notification:
+Android 1.0.4 has three application-specific reminder paths plus a separate app-update notification:
 
 | Reminder | Created by | Notification text | Opens |
 | --- | --- | --- | --- |
@@ -99,7 +99,7 @@ npm run android:sync
 npm run android:debug
 ```
 
-The debug command writes `release/android/Work-Day-with-God-Android-Debug-1.0.3.apk` plus a `.sha256` file. Debug builds use the standard Android development key and must not be published as production releases.
+The debug command writes `release/android/Work-Day-with-God-Android-Debug-1.0.4.apk` plus a `.sha256` file. Debug builds use the standard Android development key and must not be published as production releases.
 
 ## Build a signed release
 
@@ -129,11 +129,11 @@ npm run android:release
 The release helper performs the Vite production build, synchronizes Capacitor, runs Gradle `assembleRelease`, copies the APK into `release/android`, verifies zip alignment, verifies the APK signing certificate, and writes a SHA-256 sidecar. Successful output is:
 
 ```text
-release/android/Work-Day-with-God-Android-1.0.3.apk
-release/android/Work-Day-with-God-Android-1.0.3.apk.sha256
+release/android/Work-Day-with-God-Android-1.0.4.apk
+release/android/Work-Day-with-God-Android-1.0.4.apk.sha256
 ```
 
-Android’s visible semantic version and monotonically increasing build code live in `android/gradle.properties`. Windows continues to use the repository-level `package.json` version. For Android 1.0.3, the version name is `1.0.3` and version code is `100003`; future Android releases must always increase the version code.
+Android’s visible semantic version and monotonically increasing build code live in `android/gradle.properties`. Windows continues to use the repository-level `package.json` version. For Android 1.0.4, the version name is `1.0.4` and version code is `100004`; future Android releases must always increase the version code.
 
 ## Troubleshooting
 

@@ -2,7 +2,7 @@
 
 The Majestic Creations portfolio reads the current Work Day with God Windows, Linux, and Android releases from the GitHub Releases API during its Pages build. The generated metadata is stored at `app/projects/work-day-with-god/releases.json` in the portfolio repository.
 
-The current release pair is Windows `v1.4.9` and Android `android-v1.0.3`. Publish the Windows NSIS installer, blockmap, and `latest.yml` to the stable Windows release, and publish the signed Android APK and `.sha256` sidecar to the separate Android release. The portfolio’s release-sync script then updates the download cards and version metadata.
+The current release pair is Windows `v1.4.9` and Android `android-v1.0.4`. Publish the Windows NSIS installer, blockmap, and `latest.yml` to the stable Windows release, and publish the signed Android APK and `.sha256` sidecar to the separate Android release. The portfolio’s release-sync script then updates the download cards and version metadata.
 
 For immediate updates after a release is published, configure one reusable fine-grained GitHub token as the `PORTFOLIO_DISPATCH_TOKEN` Actions secret in this repository. The token needs access to the portfolio repository `mcographics/mcographics.github.io` with `Contents: Read and write` permission so it can dispatch an event (and no access to application source code is required). Use the same token and secret name in any other project repository that receives a matching release-notification workflow. The `Notify portfolio of Work Day with God release` workflow then requests a sync; the portfolio sync workflow commits changed metadata, which automatically starts the Pages deployment.
 

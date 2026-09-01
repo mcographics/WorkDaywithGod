@@ -4,7 +4,7 @@
 
 Work Day with God is a peaceful Windows, Android, and iOS companion created to help Christians pause, read Scripture, reflect, and pray throughout the working day.
 
-**[Download Windows 1.4.9](https://github.com/mcographics/WorkDaywithGod/releases/latest)** · **[Download Android 1.0.3](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.3)** · **[Linux 1.2.2 testing preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.2.2-linux-beta.1)** · **[Discord support](https://discord.gg/2UvdpY4JSW)** · **[Changelog](CHANGELOG.md)** · **[Security policy](SECURITY.md)**
+**[Download Windows 1.4.9](https://github.com/mcographics/WorkDaywithGod/releases/latest)** · **[Download Android 1.0.4](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.4)** · **[Linux 1.2.2 testing preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.2.2-linux-beta.1)** · **[Discord support](https://discord.gg/2UvdpY4JSW)** · **[Changelog](CHANGELOG.md)** · **[Security policy](SECURITY.md)**
 
 Each calendar day presents a Bible verse, an original devotional reflection, a practical question, a short prayer, and a scenic background. Gentle reminders can be scheduled around your day through Windows, native Android notifications, or native iOS notifications.
 
@@ -15,7 +15,7 @@ There are no subscriptions, advertisements, accounts, or paid features. The app 
 | Platform | Current version | Release status | Download | Source line |
 | --- | --- | --- | --- | --- |
 | Windows x64 | 1.4.9 | Stable | [Windows release](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.4.9) | [`main`](https://github.com/mcographics/WorkDaywithGod/tree/main) |
-| Android 7.0+ | 1.0.3 | Stable GitHub APK | [Android release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.3) | [`android-v1.0.3`](https://github.com/mcographics/WorkDaywithGod/tree/android-v1.0.3) |
+| Android 7.0+ | 1.0.4 | Stable GitHub APK | [Android release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.4) | [`android-v1.0.4`](https://github.com/mcographics/WorkDaywithGod/tree/android-v1.0.4) |
 | iOS 15+ | 1.0.0 | Native project ready; not yet released | Requires Xcode signing | [`main`](https://github.com/mcographics/WorkDaywithGod/tree/main) |
 | Linux x64 | 1.2.2 | Testing prerelease | [Linux testing preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.2.2-linux-beta.1) | [`linux-v1.2.2-testing`](https://github.com/mcographics/WorkDaywithGod/tree/linux-v1.2.2-testing) |
 
@@ -135,9 +135,9 @@ The installer creates a Start Menu shortcut and offers a desktop shortcut. Unins
 
 ## Installing on Android
 
-The current Android release is **Work Day with God 1.0.3** for phones running Android 7.0 or newer. It is a separate release line from Windows 1.4.9. Download `Work-Day-with-God-Android-1.0.3.apk` and its `.sha256` checksum from the [Android 1.0.3 release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.3).
+The current Android release is **Work Day with God 1.0.4** for phones running Android 7.0 or newer. It is a separate release line from Windows 1.4.9. Download `Work-Day-with-God-Android-1.0.4.apk` and its `.sha256` checksum from the [Android 1.0.4 release](https://github.com/mcographics/WorkDaywithGod/releases/tag/android-v1.0.4).
 
-The exact source snapshot used for the Android release is preserved by the [`android-v1.0.3` tag](https://github.com/mcographics/WorkDaywithGod/tree/android-v1.0.3).
+The exact source snapshot used for the Android release is preserved by the [`android-v1.0.4` tag](https://github.com/mcographics/WorkDaywithGod/tree/android-v1.0.4).
 
 ### Android app preview
 
@@ -172,7 +172,7 @@ Updates can be installed over the existing Android app by opening a newer APK si
 
 ## Linux testing preview
 
-The current public Linux build is **Work Day with God 1.2.2 for Linux x64**. It remains an experimental testing prerelease and is not part of the stable Windows 1.4.9 or Android 1.0.3 release lines. The next Linux build is prepared in source but awaits a Linux-capable packaging environment.
+The current public Linux build is **Work Day with God 1.2.2 for Linux x64**. It remains an experimental testing prerelease and is not part of the stable Windows 1.4.9 or Android 1.0.4 release lines. The next Linux build is prepared in source but awaits a Linux-capable packaging environment.
 
 Download the existing packages from the [`v1.2.2-linux-beta.1` Linux Testing Preview](https://github.com/mcographics/WorkDaywithGod/releases/tag/v1.2.2-linux-beta.1). The exact source used for those packages is preserved separately on the [`linux-v1.2.2-testing` branch](https://github.com/mcographics/WorkDaywithGod/tree/linux-v1.2.2-testing).
 
